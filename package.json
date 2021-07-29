@@ -1,0 +1,25 @@
+{
+    "name": "frontify-authenticator",
+    "version": "2.0.0",
+    "description": "Authenticate to your Frontify instance from within any secure web app",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Frontify/frontify-authenticator.git"
+    },
+    "keywords": [
+        "frontify",
+        "authenticator",
+        "oauth",
+        "brand"
+    ],
+    "author": "Frontify",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://developer.frontify.com/"
+    },
+    "homepage": "https://developer.frontify.com/"
+}
