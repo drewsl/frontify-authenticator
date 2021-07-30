@@ -1,25 +1,57 @@
 {
-    "name": "frontify-authenticator",
-    "version": "2.0.0",
-    "description": "Authenticate to your Frontify instance from within any secure web app",
-    "main": "index.js",
-    "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/Frontify/frontify-authenticator.git"
-    },
-    "keywords": [
-        "frontify",
-        "authenticator",
-        "oauth",
-        "brand"
-    ],
-    "author": "Frontify",
-    "license": "MIT",
-    "bugs": {
-        "url": "https://developer.frontify.com/"
-    },
-    "homepage": "https://developer.frontify.com/"
+  "name": "frontify-authenticator",
+  "version": "2.0.0",
+  "description": "Authenticate to your Frontify instance from within any secure web app",
+  "type": "commonjs",
+  "types": "lib/index.d.ts",
+  "main": "lib/index.js",
+  "exports": {
+    ".": {
+      "require": "./lib/commonjs/index.js",
+      "default": "./lib/esm/index.mjs"
+    }
+  },
+  "module": "lib/esm/index.mjs",
+  "scripts": {
+    "test": "jest --config jestconfig.json",
+    "build": "tsc",
+    "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
+    "lint": "tslint -p tsconfig.json",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm test && npm run lint",
+    "preversion": "npm run lint",
+    "version": "npm run format && git add -A src",
+    "postversion": "git push && git push --tags"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Frontify/frontify-authenticator.git"
+  },
+  "keywords": [
+    "frontify",
+    "authenticator",
+    "oauth",
+    "brand"
+  ],
+  "author": "Frontify",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Frontify/frontify-authenticator/issues"
+  },
+  "homepage": "https://developer.frontify.com/",
+  "files": [
+    "lib/**/*"
+  ],
+  "devDependencies": {
+    "@types/jest": "^26.0.24",
+    "esm": "^3.2.25",
+    "jest": "^27.0.6",
+    "prettier": "^2.3.2",
+    "requirejs": "^2.3.6",
+    "ts-jest": "^27.0.4",
+    "tslint": "^6.1.3",
+    "tslint-config-prettier": "^1.18.0",
+    "typescript": "^4.3.5"
+  },
+  "dependencies": {}
 }
