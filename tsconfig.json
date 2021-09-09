@@ -8,7 +8,7 @@
         "moduleResolution": "node",
         "esModuleInterop": true,
         "lib": ["DOM", "DOM.Iterable", "ESNext"],
-        "types": ["jest"]
+        "types": ["jest", "node"]
     },
     "include": ["src"],
     "exclude": ["node_modules", "**/tests/*"]

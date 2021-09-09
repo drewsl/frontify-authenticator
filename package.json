@@ -46,10 +46,12 @@
   "homepage": "https://developer.frontify.com/",
   "devDependencies": {
     "@types/jest": "^26.0.24",
+    "@types/node": "^16.7.13",
     "cross-env": "^7.0.3",
     "esbuild": "^0.12.17",
     "esm": "^3.2.25",
     "jest": "^27.0.6",
+    "node-fetch": "^3.0.0",
     "prettier": "^2.3.2",
     "requirejs": "^2.3.6",
     "rollup": "^2.55.1",
