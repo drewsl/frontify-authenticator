@@ -27,7 +27,10 @@
 <body>
 <div>
     <p>Frontify Authenticator</p>
-    <p><button id="btn">Authorize</button></p>
+    <p>
+        <button id="authorize">Authorize</button>
+        <button id="revoke">Revoke</button>
+    </p>
     <p>
         Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore
         magna aliqua. Ultrices tincidunt arcu non sodales neque sodales ut etiam. Libero volutpat sed cras ornare arcu.
@@ -60,8 +63,8 @@
 </div>
 <div id="AuthenticatorFrame"></div>
 <script type="module">
-    import {authorize} from "../dist/index.mjs";
-    let authenticated = null;
+    import {authorize, revoke} from "../dist/index.mjs";
+    let bearerToken = null;
     const POPUP_CONFIG = {
         width: 800,
         height: 600,
@@ -77,19 +80,37 @@
         scopes: ['finder:read'],
     }
   
-    function createAuthorizationPopUp() {
-        if (!authenticated) {
+    function authorizeAction() {
+        // handle domain window
+        if (!bearerToken) {
             authorize(AUTHORIZATION_CONFIG, POPUP_CONFIG).then(res => {
-                console.log('1st auth');
+                console.log('initial auth');
                 console.log(res);
-                authenticated = res;
+                bearerToken = res;
             });
         } else {
-            console.log(authenticated);
             console.log('memory auth');
+            console.log(bearerToken);
         }
     }
-    document.getElementById('btn').addEventListener('click', createAuthorizationPopUp)
+
+
+    function revokeAction() {
+        // handle domain window
+        if (!bearerToken) {
+            console.log('Nothing to revoke!');
+            return;
+        }
+
+        revoke(bearerToken).then(res => {
+            console.log('revoke');
+            console.log(res);
+            bearerToken = null;
+        });
+    }
+
+    document.getElementById('authorize').addEventListener('click', authorizeAction)
+    document.getElementById('revoke').addEventListener('click', revokeAction)
 </script>
 
 </body>

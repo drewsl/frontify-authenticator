@@ -85,6 +85,8 @@ export async function pollOauthSession(
             })
         });
 
+    // @TODO handle response.data, response.data.payload and response.data.payload.code
+
     return response.data.payload.code
 }
 

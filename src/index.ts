@@ -4,7 +4,8 @@ import {
     BearerToken,
     computeAuthorizationUrl,
     pollOauthSession,
-    retrieveAccessToken
+    retrieveAccessToken,
+    revokeAccessToken
 } from "./Oauth";
 
 export async function authorize(configuration: AuthenticationConfig, popupConfiguration?: PopupConfiguration): Promise<BearerToken> {
@@ -20,6 +21,12 @@ export async function authorize(configuration: AuthenticationConfig, popupConfig
     await awaitUserAuthorization(authorizationUrl, popUp);
     const authorizationCode = await pollOauthSession(configuration, sessionId);
     return retrieveAccessToken(configuration, authorizationCode, codeVerifier);
+}
+
+// export refresh
+
+export async function revoke(token: BearerToken): Promise<void> {
+    return await revokeAccessToken({bearerToken: token.accessToken, domain: token.domain});
 }
 
 async function awaitUserAuthorization(authorizationUrl: string, popUp: Popup) {
