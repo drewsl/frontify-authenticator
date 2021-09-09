@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="./favicon.ico" />
+    <title>Frontify Authenticator</title>
+    <style>
+        body {
+            padding: 40px;
+        }
+
+        #AuthenticatorFrame {
+            display: none;
+            width: 800px;
+            height: 600px;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            background-color: transparent;
+            z-index: 1002;
+            margin-left: -400px;
+            margin-top: -300px;
+            box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+<div>
+    <p>Frontify Authenticator</p>
+    <p><button id="btn">Authorize</button></p>
+    <p>
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore
+        magna aliqua. Ultrices tincidunt arcu non sodales neque sodales ut etiam. Libero volutpat sed cras ornare arcu.
+        Ornare suspendisse sed nisi lacus sed viverra tellus in. Pretium viverra suspendisse potenti nullam ac tortor
+        vitae purus faucibus. Et malesuada fames ac turpis egestas. Justo nec ultrices dui sapien eget mi proin sed.
+        Phasellus faucibus scelerisque eleifend donec pretium vulputate. Donec pretium vulputate sapien nec sagittis
+        aliquam. Etiam sit amet nisl purus in mollis nunc. Faucibus purus in massa tempor nec. Eu tincidunt tortor
+        aliquam nulla facilisi. Eget mi proin sed libero enim sed faucibus turpis. Odio aenean sed adipiscing diam donec
+        adipiscing tristique. In aliquam sem fringilla ut morbi tincidunt augue interdum velit. Lorem donec massa sapien
+        faucibus. Nulla aliquet porttitor lacus luctus accumsan.
+    </p>
+    <p>
+        Pharetra vel turpis nunc eget lorem dolor sed viverra ipsum. Consectetur libero id faucibus nisl tincidunt eget
+        nullam non. Pretium viverra suspendisse potenti nullam ac tortor vitae. Quam viverra orci sagittis eu volutpat
+        odio. Vitae auctor eu augue ut lectus arcu bibendum. Vel turpis nunc eget lorem dolor sed viverra ipsum nunc.
+        Volutpat blandit aliquam etiam erat velit scelerisque in. Dignissim suspendisse in est ante in nibh mauris
+        cursus. Vitae nunc sed velit dignissim sodales ut eu. In arcu cursus euismod quis viverra nibh cras. Urna neque
+        viverra justo nec ultrices dui sapien eget mi. Sed nisi lacus sed viverra. Auctor urna nunc id cursus metus
+        aliquam. Vehicula ipsum a arcu cursus vitae. Aliquet enim tortor at auctor urna nunc id.
+    </p>
+    <p>
+        Pharetra convallis posuere morbi leo urna molestie at. Ultricies integer quis auctor elit. Sed risus ultricies
+        tristique nulla aliquet enim tortor at auctor. Praesent semper feugiat nibh sed pulvinar proin. Donec ultrices
+        tincidunt arcu non sodales neque sodales. Id nibh tortor id aliquet lectus. Et pharetra pharetra massa massa
+        ultricies mi quis. In egestas erat imperdiet sed euismod nisi porta. Viverra accumsan in nisl nisi. Nulla
+        aliquet enim tortor at auctor urna nunc id. Augue mauris augue neque gravida. Laoreet sit amet cursus sit amet
+        dictum sit. Curabitur vitae nunc sed velit. Sit amet justo donec enim diam vulputate ut. Varius quam quisque id
+        diam.
+    </p>
+</div>
+<div id="AuthenticatorFrame"></div>
+<script type="module">
+    import {authorize} from "../dist/index.mjs";
+    let authenticated = null;
+    const POPUP_CONFIG = {
+        width: 800,
+        height: 600,
+        top: 50,
+        left: 50,
+        title: "Authorize Frontify"
+    };
+
+    const AUTHORIZATION_CONFIG = {
+        domain: 'https://weare.frontify.com/',
+        clientId: 'frontify-finder',
+        redirectUri: '/connection/frontify-finder',
+        scopes: ['finder:read'],
+    }
+  
+    function createAuthorizationPopUp() {
+        if (!authenticated) {
+            authorize(AUTHORIZATION_CONFIG, POPUP_CONFIG).then(res => {
+                console.log('1st auth');
+                console.log(res);
+                authenticated = res;
+            });
+        } else {
+            console.log(authenticated);
+            console.log('memory auth');
+        }
+    }
+    document.getElementById('btn').addEventListener('click', createAuthorizationPopUp)
+</script>
+
+</body>
+</html>
