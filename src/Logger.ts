@@ -1,7 +1,7 @@
 export type LogInfo = {
-    code: string,
-    message: string
-}
+    code: string;
+    message: string;
+};
 
 export function logMessage(type: string, info: LogInfo) {
     switch (type) {
