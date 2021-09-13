@@ -27,11 +27,12 @@ const DEFAULT_POPUP_CONFIG = {
 
 export class Popup {
     private readonly popUp: Window | null;
+    private readonly interval: NodeJS.Timer;
     private readonly unregisterEventListener: () => void;
     private static CANCELLED_EVENT = 'frontify-oauth-authorize-cancelled';
     private static SUCCESS_EVENT = 'frontify-oauth-authorize-success';
-    private listeners: { [name: string]: () => void } = {};
-    private readonly interval: NodeJS.Timer;
+    private listeners: { [name: string]: (domain?: string | null) => void } = {};
+    private domain?: string = undefined;
 
     public constructor(userConfiguration: PopupConfiguration) {
         const configuration = { ...DEFAULT_POPUP_CONFIG, ...userConfiguration };
@@ -55,6 +56,12 @@ export class Popup {
                     this.call('success');
                     break;
                 default:
+                    if (event.data.domain) {
+                        this.setDomain(event.data.domain);
+                        this.call('domain');
+                    } else if (event.data.aborted) {
+                        this.call('aborted');
+                    }
                     return;
             }
         };
@@ -81,10 +88,26 @@ export class Popup {
         return popUp;
     }
 
-    private call(listener: 'success' | 'cancelled') {
+    private call(listener: 'domain' | 'aborted' | 'success' | 'cancelled') {
         if (this.listeners[listener]) {
             this.listeners[listener]();
         }
+    }
+
+    private setDomain(domain: string) {
+        this.domain = domain;
+    }
+
+    public getDomain(): string | undefined {
+        return this.domain;
+    }
+
+    public onDomain(callback: any) {
+        this.listeners.domain = callback;
+    }
+
+    public onAborted(callback: any) {
+        this.listeners.aborted = callback;
     }
 
     public onSuccess(callback: any) {
