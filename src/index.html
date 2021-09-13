@@ -29,6 +29,7 @@
     <p>Frontify Authenticator</p>
     <p>
         <button id="authorize">Authorize</button>
+        <button id="refresh">Refresh</button>
         <button id="revoke">Revoke</button>
     </p>
     <p>
@@ -63,7 +64,7 @@
 </div>
 <div id="AuthenticatorFrame"></div>
 <script type="module">
-    import {authorize, revoke} from "../dist/index.mjs";
+    import {authorize, revoke, refresh} from "../dist/index.mjs";
     let bearerToken = null;
     const POPUP_CONFIG = {
         width: 800,
@@ -75,10 +76,10 @@
 
     const AUTHORIZATION_CONFIG = {
         domain: 'https://weare.frontify.com/',
-        clientId: 'frontify-finder',
-        redirectUri: '/connection/frontify-finder',
-        scopes: ['finder:read'],
-    }
+        clientId: 'frontify-explorer',
+        redirectUri: '/connection/frontify-explorer',
+        scopes: ['basic:read'],
+    };
   
     function authorizeAction() {
         // handle domain window
@@ -86,7 +87,10 @@
             authorize(AUTHORIZATION_CONFIG, POPUP_CONFIG).then(res => {
                 console.log('initial auth');
                 console.log(res);
+                AUTHORIZATION_CONFIG.domain = res.domain;
                 bearerToken = res;
+            }).catch(error => {
+                console.log(error);
             });
         } else {
             console.log('memory auth');
@@ -103,14 +107,29 @@
         }
 
         revoke(bearerToken).then(res => {
-            console.log('revoke');
+            console.log('revoked token');
             console.log(res);
             bearerToken = null;
         });
     }
 
-    document.getElementById('authorize').addEventListener('click', authorizeAction)
-    document.getElementById('revoke').addEventListener('click', revokeAction)
+    function refreshAction() {
+        // handle domain window
+        if (!bearerToken) {
+            console.log('Nothing to refresh!');
+            return;
+        }
+
+        refresh(AUTHORIZATION_CONFIG, bearerToken).then(res => {
+            console.log('refreshed token');
+            console.log(res);
+            bearerToken = res;
+        });
+    }
+
+    document.getElementById('authorize').addEventListener('click', authorizeAction);
+    document.getElementById('revoke').addEventListener('click', revokeAction);
+    document.getElementById('refresh').addEventListener('click', refreshAction)
 </script>
 
 </body>
