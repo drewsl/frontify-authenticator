@@ -42,19 +42,18 @@ export async function computeAuthorizationUrl(config: AuthenticationConfig): Pro
     const codeVerifier = getRandomString(CODE_VERIFIER_LENGTH);
     const codeChallenge = await computeChallengeCode(codeVerifier);
     const sessionId = await initializeOauthSession(config);
-    const urlParameters = {
-        response_type: AUTH_URL_RESPONSE_TYPE,
-        client_id: config.clientId,
-        scope: config.scopes.join('+'),
-        code_challenge: codeChallenge,
-        code_challenge_method: AUTH_URL_CODE_CHALLENGE_METHOD,
-        redirect_uri: config.redirectUri ?? AUTH_DEFAULT_REDIRECT_URL,
-        session_id: sessionId,
-    };
 
     return {
         authorizationUrl: `https://${normalizeDomain(config.domain)}/api/oauth/authorize?${toUrlParameter(
-            urlParameters,
+            {
+                response_type: AUTH_URL_RESPONSE_TYPE,
+                client_id: config.clientId,
+                scope: config.scopes.join('+'),
+                code_challenge: codeChallenge,
+                code_challenge_method: AUTH_URL_CODE_CHALLENGE_METHOD,
+                redirect_uri: config.redirectUri ?? AUTH_DEFAULT_REDIRECT_URL,
+                session_id: sessionId,
+            },
         )}`,
         codeVerifier,
         sessionId,
