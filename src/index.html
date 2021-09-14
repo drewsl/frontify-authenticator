@@ -75,7 +75,7 @@
     };
 
     const AUTHORIZATION_CONFIG = {
-        domain: 'https://weare.frontify.com/',
+        // domain: 'https://weare.frontify.com/',
         clientId: 'frontify-explorer',
         redirectUri: '/connection/frontify-explorer',
         scopes: ['basic:read'],
@@ -87,20 +87,23 @@
             authorize(AUTHORIZATION_CONFIG, POPUP_CONFIG).then(res => {
                 console.log('initial auth');
                 console.log(res);
-                AUTHORIZATION_CONFIG.domain = res.domain;
-                bearerToken = res;
+                if (res) {
+                    if (res.domain) {
+                        AUTHORIZATION_CONFIG.domain = res.domain;
+                    }
+                    bearerToken = res;
+                }
             }).catch(error => {
                 console.log(error);
             });
         } else {
-            console.log('memory auth');
+            console.log('stored auth');
             console.log(bearerToken);
         }
     }
 
 
     function revokeAction() {
-        // handle domain window
         if (!bearerToken) {
             console.log('Nothing to revoke!');
             return;
@@ -114,7 +117,6 @@
     }
 
     function refreshAction() {
-        // handle domain window
         if (!bearerToken) {
             console.log('Nothing to refresh!');
             return;
