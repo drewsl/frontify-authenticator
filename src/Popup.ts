@@ -29,8 +29,12 @@ export class Popup {
     private readonly popUp: Window | null;
     private readonly interval: NodeJS.Timer;
     private readonly unregisterEventListener: () => void;
-    private static CANCELLED_EVENT = 'frontify-oauth-authorize-cancelled';
-    private static SUCCESS_EVENT = 'frontify-oauth-authorize-success';
+    private static EVENT_NAME_CANCELLED: string = 'frontify-oauth-authorize-cancelled';
+    private static EVENT_NAME_SUCCESS: string = 'frontify-oauth-authorize-success';
+    private static EVENT_METHOD_CANCELLED: string = 'cancelled';
+    private static EVENT_METHOD_SUCCESS: string = 'success';
+    private static EVENT_METHOD_DOMAIN: string = 'domain';
+    private static EVENT_METHOD_ABORTED: string = 'aborted';
     private listeners: { [name: string]: (domain?: string | null) => void } = {};
     private domain?: string = undefined;
 
@@ -41,7 +45,7 @@ export class Popup {
         this.interval = setInterval(() => {
             if (this.popUp && this.popUp.closed) {
                 clearInterval(this.interval);
-                this.call('cancelled');
+                this.call(Popup.EVENT_METHOD_CANCELLED);
             }
         }, 100);
     }
@@ -49,18 +53,18 @@ export class Popup {
     private attachEventListeners: () => void = () => {
         return (event: MessageEvent) => {
             switch (event.data) {
-                case Popup.CANCELLED_EVENT:
-                    this.call('cancelled');
+                case Popup.EVENT_NAME_CANCELLED:
+                    this.call(Popup.EVENT_METHOD_CANCELLED);
                     break;
-                case Popup.SUCCESS_EVENT:
-                    this.call('success');
+                case Popup.EVENT_NAME_SUCCESS:
+                    this.call(Popup.EVENT_METHOD_SUCCESS);
                     break;
                 default:
                     if (event.data.domain) {
                         this.setDomain(event.data.domain);
-                        this.call('domain');
+                        this.call(Popup.EVENT_METHOD_DOMAIN);
                     } else if (event.data.aborted) {
-                        this.call('aborted');
+                        this.call(Popup.EVENT_METHOD_ABORTED);
                     }
                     return;
             }
@@ -88,7 +92,7 @@ export class Popup {
         return popUp;
     }
 
-    private call(listener: 'domain' | 'aborted' | 'success' | 'cancelled') {
+    private call(listener: string) {
         if (this.listeners[listener]) {
             this.listeners[listener]();
         }
