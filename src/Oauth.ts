@@ -1,7 +1,14 @@
 import { encodeUrlToBase64, getRandomString, toUrlParameter, httpCall, normalizeDomain } from './Utils';
 import { logMessage } from './Logger';
 
-const CODE_VERIFIER_LENGTH = 64;
+const CODE_VERIFIER_LENGTH: number = 64;
+const AUTH_URL_RESPONSE_TYPE: string = 'code';
+const AUTH_URL_CODE_CHALLENGE_METHOD: string = 'S256';
+const AUTH_DEFAULT_REDIRECT_URL: string = '/connection/authenticator';
+const AUTH_CODE_GRANT_TYPE: string = 'authorization_code';
+const REFRESH_TOKEN_GRANT_TYPE: string = 'refresh_token';
+const HASH_ALGORITHM: string = 'SHA-256';
+const BEARER_TOKEN_TYPE: string = 'Bearer';
 
 export type AuthenticationConfig = {
     domain: string;
@@ -17,7 +24,7 @@ export type AuthorizationUrl = {
 };
 
 export type BearerToken = {
-    tokenType: 'Bearer';
+    tokenType: string;
     expiresIn: number;
     accessToken: string;
     refreshToken: string;
@@ -26,7 +33,7 @@ export type BearerToken = {
 
 async function computeChallengeCode(codeVerifier: string): Promise<string> {
     let array = new TextEncoder().encode(codeVerifier);
-    const digest = await window.crypto.subtle.digest('SHA-256', array);
+    const digest = await window.crypto.subtle.digest(HASH_ALGORITHM, array);
     const hash = String.fromCharCode.apply(null, Array.from(new Uint8Array(digest)));
     return encodeUrlToBase64(hash);
 }
@@ -36,12 +43,12 @@ export async function computeAuthorizationUrl(config: AuthenticationConfig): Pro
     const codeChallenge = await computeChallengeCode(codeVerifier);
     const sessionId = await initializeOauthSession(config);
     const urlParameters = {
-        response_type: 'code',
+        response_type: AUTH_URL_RESPONSE_TYPE,
         client_id: config.clientId,
         scope: config.scopes.join('+'),
         code_challenge: codeChallenge,
-        code_challenge_method: 'S256',
-        redirect_uri: config.redirectUri ?? '/connection/authenticator',
+        code_challenge_method: AUTH_URL_CODE_CHALLENGE_METHOD,
+        redirect_uri: config.redirectUri ?? AUTH_DEFAULT_REDIRECT_URL,
         session_id: sessionId,
     };
 
@@ -94,31 +101,30 @@ export async function retrieveAccessToken(
     code: string,
     codeVerifier: string,
 ): Promise<BearerToken> {
-    const parameters = {
-        grant_type: 'authorization_code',
-        code,
-        code_verifier: codeVerifier,
-        client_id: config.clientId,
-        redirect_uri: config.redirectUri ?? '/connection/authenticator',
-    };
-
+    const normalizedDomain = normalizeDomain(config.domain);
     const response = await httpCall<{ access_token: string; expires_in: number; refresh_token: string }>(
-        `https://${normalizeDomain(config.domain)}/api/oauth/accesstoken`,
+        `https://${normalizedDomain}/api/oauth/accesstoken`,
         {
             method: 'POST',
             headers: {
                 'content-type': 'application/json',
             },
-            body: JSON.stringify(parameters),
+            body: JSON.stringify({
+                grant_type: AUTH_CODE_GRANT_TYPE,
+                code,
+                code_verifier: codeVerifier,
+                client_id: config.clientId,
+                redirect_uri: config.redirectUri ?? AUTH_DEFAULT_REDIRECT_URL,
+            }),
         },
     );
 
     return {
-        tokenType: 'Bearer',
+        tokenType: BEARER_TOKEN_TYPE,
         expiresIn: response.expires_in,
         accessToken: response.access_token,
         refreshToken: response.refresh_token,
-        domain: normalizeDomain(config.domain),
+        domain: normalizedDomain,
     };
 }
 
@@ -126,32 +132,29 @@ export async function refreshToken(
     config: AuthenticationConfig,
     refreshToken: string,
 ): Promise<BearerToken> {
-    const parameters = {
-        grant_type: 'refresh_token',
-        refresh_token: refreshToken,
-        client_id: config.clientId,
-        scope: config.scopes,
-    };
-
+    const normalizedDomain = normalizeDomain(config.domain);
     const response = await httpCall<{ access_token: string; expires_in: number; refresh_token: string }>(
-        `https://${normalizeDomain(config.domain)}/api/oauth/refresh`,
+        `https://${normalizedDomain}/api/oauth/refresh`,
         {
             method: 'POST',
             headers: {
                 'content-type': 'application/json',
             },
-            mode: 'no-cors',
-            body: JSON.stringify(parameters),
+            body: JSON.stringify({
+                grant_type: REFRESH_TOKEN_GRANT_TYPE,
+                refresh_token: refreshToken,
+                client_id: config.clientId,
+                scope: config.scopes.join('+'),
+            }),
         },
     );
 
-
     return {
-        tokenType: 'Bearer',
+        tokenType: BEARER_TOKEN_TYPE,
         expiresIn: response.expires_in,
         accessToken: response.access_token,
         refreshToken: response.refresh_token,
-        domain: normalizeDomain(config.domain),
+        domain: normalizedDomain,
     };
 }
 
@@ -160,7 +163,7 @@ export async function revokeToken(
     accessToken: string,
 ): Promise<void> {
     try {
-        await httpCall(`https://${domain}/api/oauth/revoke`, {
+        await httpCall(`https://${normalizeDomain(domain)}/api/oauth/revoke`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
