@@ -11,6 +11,7 @@ import {
 } from './Oauth';
 
 const DOMAIN_WINDOW_DEFAULT_URL = 'https://dev.frontify.test/finder';
+const POPUP_DEFAULT_TITLE = 'Authorize Frontify';
 
 export async function authorize(
     configuration: AuthenticationConfig,
@@ -22,14 +23,14 @@ export async function authorize(
             height: 600,
             top: 50,
             left: 50,
-            title: 'Authorize Frontify',
+            title: POPUP_DEFAULT_TITLE,
         },
     );
 
     if (!configuration.domain) {
         await awaitUserDomain(popUp).then(() => {
             let domainInput = popUp.getDomain();
-            // do further validation
+
             if (domainInput) {
                 configuration.domain = domainInput;
             }
@@ -40,6 +41,7 @@ export async function authorize(
     await awaitUserAuthorization(authorizationUrl, popUp);
     const authorizationCode = await pollOauthSession(configuration, sessionId);
     return retrieveAccessToken(configuration, authorizationCode, codeVerifier);
+
 }
 
 export async function refresh(config: AuthenticationConfig, bearerToken: BearerToken): Promise<BearerToken> {

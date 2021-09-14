@@ -29,9 +29,11 @@ export function normalizeDomain(domain: string): string {
 
 export async function httpCall<JsonResponse>(url: string, init?: RequestInit): Promise<JsonResponse> {
     const response = await fetch(url, init);
+
     if (response.status >= 200 && response.status <= 299) {
         return (await response.json()) as JsonResponse;
     }
+
     throw new Error(response.statusText);
 }
 
