@@ -11,10 +11,9 @@ const HASH_ALGORITHM: string = 'SHA-256';
 const BEARER_TOKEN_TYPE: string = 'Bearer';
 
 export type AuthenticationConfig = {
-    domain: string;
+    domain?: string;
     clientId: string;
-    scopes: Array<string>;
-    redirectUri?: string;
+    scopes: string[];
 };
 
 export type AuthorizationUrl = {
@@ -31,17 +30,28 @@ export type BearerToken = {
     domain: string;
 };
 
+export type Token = {
+    bearerToken: BearerToken;
+    clientId: string;
+    scopes: string[];
+};
+
 async function computeChallengeCode(codeVerifier: string): Promise<string> {
-    let array = new TextEncoder().encode(codeVerifier);
-    const digest = await window.crypto.subtle.digest(HASH_ALGORITHM, array);
-    const hash = String.fromCharCode.apply(null, Array.from(new Uint8Array(digest)));
+    const array: Uint8Array = new TextEncoder().encode(codeVerifier);
+    const digest: ArrayBuffer = await window.crypto.subtle.digest(HASH_ALGORITHM, array);
+    const hash: string = String.fromCharCode.apply(null, Array.from(new Uint8Array(digest)));
     return encodeUrlToBase64(hash);
 }
 
 export async function computeAuthorizationUrl(config: AuthenticationConfig): Promise<AuthorizationUrl> {
-    const codeVerifier = getRandomString(CODE_VERIFIER_LENGTH);
-    const codeChallenge = await computeChallengeCode(codeVerifier);
-    const sessionId = await initializeOauthSession(config);
+
+    if (!config.domain) {
+        throw new Error('No domain provided!');
+    }
+
+    const codeVerifier: string = getRandomString(CODE_VERIFIER_LENGTH);
+    const codeChallenge: string  = await computeChallengeCode(codeVerifier);
+    const sessionId: string  = await initializeOauthSession(config.domain);
 
     return {
         authorizationUrl: `https://${normalizeDomain(config.domain)}/api/oauth/authorize?${toUrlParameter(
@@ -51,7 +61,7 @@ export async function computeAuthorizationUrl(config: AuthenticationConfig): Pro
                 scope: config.scopes.join('+'),
                 code_challenge: codeChallenge,
                 code_challenge_method: AUTH_URL_CODE_CHALLENGE_METHOD,
-                redirect_uri: config.redirectUri ?? AUTH_DEFAULT_REDIRECT_URL,
+                redirect_uri: AUTH_DEFAULT_REDIRECT_URL,
                 session_id: sessionId,
             },
         )}`,
@@ -60,10 +70,10 @@ export async function computeAuthorizationUrl(config: AuthenticationConfig): Pro
     };
 }
 
-export async function initializeOauthSession(config: AuthenticationConfig): Promise<string> {
+export async function initializeOauthSession(domain: string): Promise<string> {
     try {
         const session = await httpCall<{ data: { key: string } }>(
-            `https://${normalizeDomain(config.domain)}/api/oauth/create/session`,
+            `https://${normalizeDomain(domain)}/api/oauth/create/session`,
             { method: 'POST' },
         );
         return session.data.key;
@@ -77,6 +87,10 @@ export async function initializeOauthSession(config: AuthenticationConfig): Prom
 }
 
 export async function pollOauthSession(config: AuthenticationConfig, sessionId: string): Promise<string> {
+    if (!config.domain) {
+        throw new Error('No domain provided!');
+    }
+
     const response = await httpCall<{ data: { payload: { code: string } } }>(
         `https://${normalizeDomain(config.domain)}/api/oauth/poll`,
         {
@@ -99,7 +113,12 @@ export async function retrieveAccessToken(
     config: AuthenticationConfig,
     code: string,
     codeVerifier: string,
-): Promise<BearerToken> {
+): Promise<Token> {
+
+    if (!config.domain) {
+        throw new Error('No domain provided!');
+    }
+
     const normalizedDomain = normalizeDomain(config.domain);
     const response = await httpCall<{ access_token: string; expires_in: number; refresh_token: string }>(
         `https://${normalizedDomain}/api/oauth/accesstoken`,
@@ -113,25 +132,31 @@ export async function retrieveAccessToken(
                 code,
                 code_verifier: codeVerifier,
                 client_id: config.clientId,
-                redirect_uri: config.redirectUri ?? AUTH_DEFAULT_REDIRECT_URL,
+                redirect_uri: AUTH_DEFAULT_REDIRECT_URL,
             }),
         },
     );
 
     return {
-        tokenType: BEARER_TOKEN_TYPE,
-        expiresIn: response.expires_in,
-        accessToken: response.access_token,
-        refreshToken: response.refresh_token,
-        domain: normalizedDomain,
+        bearerToken: {
+            tokenType: BEARER_TOKEN_TYPE,
+            expiresIn: response.expires_in,
+            accessToken: response.access_token,
+            refreshToken: response.refresh_token,
+            domain: normalizedDomain,
+        },
+        clientId: config.clientId,
+        scopes: config.scopes,
     };
 }
 
 export async function refreshToken(
-    config: AuthenticationConfig,
+    domain: string,
     refreshToken: string,
-): Promise<BearerToken> {
-    const normalizedDomain = normalizeDomain(config.domain);
+    clientId: string,
+    scopes: string[],
+): Promise<Token> {
+    const normalizedDomain = normalizeDomain(domain);
     const response = await httpCall<{ access_token: string; expires_in: number; refresh_token: string }>(
         `https://${normalizedDomain}/api/oauth/refresh`,
         {
@@ -142,18 +167,22 @@ export async function refreshToken(
             body: JSON.stringify({
                 grant_type: REFRESH_TOKEN_GRANT_TYPE,
                 refresh_token: refreshToken,
-                client_id: config.clientId,
-                scope: config.scopes.join('+'),
+                client_id: clientId,
+                scope: scopes.join('+'),
             }),
         },
     );
 
     return {
-        tokenType: BEARER_TOKEN_TYPE,
-        expiresIn: response.expires_in,
-        accessToken: response.access_token,
-        refreshToken: response.refresh_token,
-        domain: normalizedDomain,
+        bearerToken: {
+            tokenType: BEARER_TOKEN_TYPE,
+            expiresIn: response.expires_in,
+            accessToken: response.access_token,
+            refreshToken: response.refresh_token,
+            domain: normalizedDomain,
+        },
+        clientId,
+        scopes,
     };
 }
 
