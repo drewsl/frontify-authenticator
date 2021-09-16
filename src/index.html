@@ -65,7 +65,8 @@
 <div id="AuthenticatorFrame"></div>
 <script type="module">
     import {authorize, revoke, refresh} from "../dist/index.mjs";
-    let bearerToken = null;
+    let domain = '';
+    let token = null;
     const POPUP_CONFIG = {
         width: 800,
         height: 600,
@@ -75,57 +76,53 @@
     };
 
     const AUTHORIZATION_CONFIG = {
-        // domain: 'https://weare.frontify.com/',
-        clientId: 'frontify-explorer',
-        redirectUri: '/connection/frontify-explorer',
-        scopes: ['basic:read'],
+        // domain: 'weare.frontify.com',
+        clientId: 'client-65yw8hnekdg4mssd',
+        redirectUri: '/connection/frontify-authenticator',
+        scopes: ["basic:read", "finder:read", "account:read"],
     };
   
     function authorizeAction() {
         // handle domain window
-        if (!bearerToken) {
+        if (!token) {
             authorize(AUTHORIZATION_CONFIG, POPUP_CONFIG).then(res => {
                 console.log('initial auth');
                 console.log(res);
                 if (res) {
-                    if (res.domain) {
-                        AUTHORIZATION_CONFIG.domain = res.domain;
-                    }
-                    bearerToken = res;
+                    domain = res.domain;
+                    token = res;
                 }
-            }).catch(error => {
-                console.log(error);
             });
         } else {
             console.log('stored auth');
-            console.log(bearerToken);
+            console.log(token);
         }
     }
 
 
     function revokeAction() {
-        if (!bearerToken) {
+        if (!token) {
             console.log('Nothing to revoke!');
             return;
         }
 
-        revoke(bearerToken).then(res => {
+        revoke(token).then(res => {
             console.log('revoked token');
             console.log(res);
-            bearerToken = null;
+            token = null;
         });
     }
 
     function refreshAction() {
-        if (!bearerToken) {
+        if (!token) {
             console.log('Nothing to refresh!');
             return;
         }
 
-        refresh(AUTHORIZATION_CONFIG, bearerToken).then(res => {
+        refresh(token).then(res => {
             console.log('refreshed token');
             console.log(res);
-            bearerToken = res;
+            token = res;
         });
     }
 
