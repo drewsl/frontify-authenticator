@@ -20,11 +20,8 @@ export function toUrlParameter(dict: { [name: string]: string }): string {
 }
 
 export function normalizeDomain(domain: string): string {
-    const normalizedDomain = domain.replace(/^(http(?:s)?:\/\/)/, '');
-    if (normalizedDomain.endsWith('/')) {
-        return normalizedDomain.replace(/\/+$/, '');
-    }
-    return normalizedDomain;
+    let normalizedDomain = domain.replace(/^(http(?:s)?:\/\/)/, '');
+    return normalizedDomain.endsWith('/') ? normalizedDomain.replace(/\/+$/, '') : normalizedDomain;
 }
 
 export async function httpCall<JsonResponse>(url: string, init?: RequestInit): Promise<JsonResponse> {
