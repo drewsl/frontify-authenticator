@@ -26,7 +26,7 @@ const DEFAULT_POPUP_CONFIG = {
 };
 
 export class Popup {
-    private readonly popUp: Window | null;
+    public readonly popUp: Window | null;
     private readonly interval: NodeJS.Timer;
     private readonly unregisterEventListener: () => void;
     private static EVENT_NAME_CANCELLED: string = 'frontify-oauth-authorize-cancelled';
@@ -35,8 +35,8 @@ export class Popup {
     private static EVENT_METHOD_SUCCESS: string = 'success';
     private static EVENT_METHOD_DOMAIN: string = 'domain';
     private static EVENT_METHOD_ABORTED: string = 'aborted';
-    private listeners: { [name: string]: (domain?: string | null) => void } = {};
-    private domain?: string = undefined;
+    private listeners: { [name: string]: () => void } = {};
+    private domain: string = "";
 
     public constructor(userConfiguration: PopupConfiguration) {
         const configuration = { ...DEFAULT_POPUP_CONFIG, ...userConfiguration };
@@ -102,7 +102,7 @@ export class Popup {
         this.domain = domain;
     }
 
-    public getDomain(): string | undefined {
+    public getDomain(): string {
         return this.domain;
     }
 
