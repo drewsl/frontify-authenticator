@@ -1,6 +1,8 @@
 import { logMessage } from './Logger';
 import { addWindowEventListener } from './Utils';
 
+const POPUP_DEFAULT_TITLE = 'Authorize Frontify';
+
 export type PopupConfiguration = {
     width?: number;
     height?: number;
@@ -22,7 +24,7 @@ const DEFAULT_POPUP_CONFIG = {
     height: 600,
     top: 50,
     left: 50,
-    title: 'Authorize Frontify',
+    title: POPUP_DEFAULT_TITLE,
 };
 
 export class Popup {
