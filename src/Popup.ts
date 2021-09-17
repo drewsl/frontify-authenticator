@@ -46,6 +46,7 @@ export class Popup {
             if (this.popUp && this.popUp.closed) {
                 clearInterval(this.interval);
                 this.call(Popup.EVENT_METHOD_CANCELLED);
+                this.call(Popup.EVENT_METHOD_ABORTED);
             }
         }, 100);
     }
