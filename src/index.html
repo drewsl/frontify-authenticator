@@ -92,6 +92,8 @@
                     domain = res.domain;
                     token = res;
                 }
+            }).catch((err) => {
+                console.log(err);
             });
         } else {
             console.log('stored auth');
@@ -110,6 +112,7 @@
             console.log('revoked token');
             console.log(res);
             token = null;
+            delete(AUTHORIZATION_CONFIG.domain);
         });
     }
 
