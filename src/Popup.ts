@@ -37,12 +37,12 @@ export class Popup {
     private static EVENT_METHOD_SUCCESS: string = 'success';
     private static EVENT_METHOD_DOMAIN: string = 'domain';
     private static EVENT_METHOD_ABORTED: string = 'aborted';
-    private listeners: { [name: string]: () => void } = {};
+    public listeners: { [name: string]: () => void } = {};
     private domain: string = "";
 
     public constructor(userConfiguration: PopupConfiguration) {
         const configuration = { ...DEFAULT_POPUP_CONFIG, ...userConfiguration };
-        this.popUp = Popup.createPopUp(configuration);
+        this.popUp = Popup.openPopUp(configuration);
         this.unregisterEventListener = addWindowEventListener('message', this.attachEventListeners());
         this.interval = setInterval(() => {
             if (this.popUp && this.popUp.closed) {
@@ -74,7 +74,7 @@ export class Popup {
         };
     };
 
-    private static createPopUp(configuration: Configuration): Window | null {
+    private static openPopUp(configuration: Configuration): Window | null {
         const popUp = window.open(
             'about:blank',
             configuration.title,
@@ -86,12 +86,14 @@ export class Popup {
             location=no, status=no, 
             directories=no, titlebar=no`,
         );
+
         if (!popUp) {
             logMessage('error', {
                 code: 'ERR_POPUP_BLOCKED',
                 message: 'Popup is blocked! Make sure to enable popups!',
             });
         }
+
         return popUp;
     }
 
