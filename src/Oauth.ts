@@ -76,7 +76,9 @@ export async function initializeOauthSession(domain: string): Promise<string> {
             `https://${normalizeDomain(domain)}/api/oauth/create/session`,
             { method: 'POST' },
         );
+
         return session.data.key;
+
     } catch (error) {
         logMessage('error', {
             code: 'ERR_SESSION',
