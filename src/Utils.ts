@@ -25,7 +25,7 @@ export function normalizeDomain(domain: string): string {
 }
 
 export async function httpCall<JsonResponse>(url: string, init?: RequestInit): Promise<JsonResponse> {
-    return await fetch(url, init).then(async (response) => {
+    return fetch(url, init).then(async (response) => {
         if (response.status >= 200 && response.status <= 299) {
             return (await response.json()) as JsonResponse;
         }
@@ -34,7 +34,7 @@ export async function httpCall<JsonResponse>(url: string, init?: RequestInit): P
         return response;
     }).catch((error) => {
         throw new Error(error);
-    })
+    });
 }
 
 export function addWindowEventListener(eventType: string, callback: any): () => void {
