@@ -49,25 +49,33 @@ export async function computeAuthorizationUrl(config: AuthenticationConfig): Pro
         throw new Error('No domain provided!');
     }
 
-    const codeVerifier: string = getRandomString(CODE_VERIFIER_LENGTH);
-    const codeChallenge: string  = await computeChallengeCode(codeVerifier);
-    const sessionId: string  = await initializeOauthSession(config.domain);
+    try {
+        const codeVerifier: string = getRandomString(CODE_VERIFIER_LENGTH);
+        const codeChallenge: string = await computeChallengeCode(codeVerifier);
+        const sessionId: string = await initializeOauthSession(config.domain);
 
-    return {
-        authorizationUrl: `https://${normalizeDomain(config.domain)}/api/oauth/authorize?${toUrlParameter(
-            {
-                response_type: AUTH_URL_RESPONSE_TYPE,
-                client_id: config.clientId,
-                scope: config.scopes.join('+'),
-                code_challenge: codeChallenge,
-                code_challenge_method: AUTH_URL_CODE_CHALLENGE_METHOD,
-                redirect_uri: AUTH_DEFAULT_REDIRECT_URL,
-                session_id: sessionId,
-            },
-        )}`,
-        codeVerifier,
-        sessionId,
-    };
+        return {
+            authorizationUrl: `https://${normalizeDomain(config.domain)}/api/oauth/authorize?${toUrlParameter(
+                {
+                    response_type: AUTH_URL_RESPONSE_TYPE,
+                    client_id: config.clientId,
+                    scope: config.scopes.join('+'),
+                    code_challenge: codeChallenge,
+                    code_challenge_method: AUTH_URL_CODE_CHALLENGE_METHOD,
+                    redirect_uri: AUTH_DEFAULT_REDIRECT_URL,
+                    session_id: sessionId,
+                },
+            )}`,
+            codeVerifier,
+            sessionId,
+        };
+    } catch (error) {
+        logMessage('error', {
+            code: 'ERR_COMPUTE_AUTH_URL',
+            message: 'Error computing authorization url.',
+        });
+        throw new Error(error);
+    }
 }
 
 export async function initializeOauthSession(domain: string): Promise<string> {
@@ -75,40 +83,52 @@ export async function initializeOauthSession(domain: string): Promise<string> {
         const session = await httpCall<{ data: { key: string } }>(
             `https://${normalizeDomain(domain)}/api/oauth/create/session`,
             { method: 'POST' },
-        );
+        ).catch((error) => {
+            logMessage('error', {
+                code: 'ERR_SESSION',
+                message: 'Error generating session.',
+            });
+            throw new Error(error);
+        });
 
         return session.data.key;
-
     } catch (error) {
         logMessage('error', {
             code: 'ERR_SESSION',
             message: 'Error generating session.',
         });
-        throw new Error('Error generating session.');
+        throw new Error(error);
     }
 }
 
 export async function pollOauthSession(config: AuthenticationConfig, sessionId: string): Promise<string> {
+
     if (!config.domain) {
         throw new Error('No domain provided!');
     }
 
-    const response = await httpCall<{ data: { payload: { code: string } } }>(
-        `https://${normalizeDomain(config.domain)}/api/oauth/poll`,
-        {
-            method: 'POST',
-            headers: {
-                'content-type': 'application/json',
+    try {
+        const response = await httpCall<{ data: { payload: { code: string } } }>(
+            `https://${normalizeDomain(config.domain)}/api/oauth/poll`,
+            {
+                method: 'POST',
+                headers: {
+                    'content-type': 'application/json',
+                },
+                body: JSON.stringify({
+                    session_id: sessionId,
+                }),
             },
-            body: JSON.stringify({
-                session_id: sessionId,
-            }),
-        },
-    );
+        );
 
-    // @TODO handle response.data, response.data.payload and response.data.payload.code
-
-    return response.data.payload.code;
+        return response.data.payload.code;
+    } catch (error) {
+        logMessage('error', {
+            code: 'ERR_POLL_SESSION',
+            message: 'Error polling session.',
+        });
+        throw new Error(error);
+    }
 }
 
 export async function retrieveAccessToken(
@@ -121,35 +141,43 @@ export async function retrieveAccessToken(
         throw new Error('No domain provided!');
     }
 
-    const normalizedDomain = normalizeDomain(config.domain);
-    const response = await httpCall<{ access_token: string; expires_in: number; refresh_token: string }>(
-        `https://${normalizedDomain}/api/oauth/accesstoken`,
-        {
-            method: 'POST',
-            headers: {
-                'content-type': 'application/json',
+    try {
+        const normalizedDomain = normalizeDomain(config.domain);
+        const response = await httpCall<{ access_token: string; expires_in: number; refresh_token: string }>(
+            `https://${normalizedDomain}/api/oauth/accesstoken`,
+            {
+                method: 'POST',
+                headers: {
+                    'content-type': 'application/json',
+                },
+                body: JSON.stringify({
+                    grant_type: AUTH_CODE_GRANT_TYPE,
+                    code,
+                    code_verifier: codeVerifier,
+                    client_id: config.clientId,
+                    redirect_uri: AUTH_DEFAULT_REDIRECT_URL,
+                }),
             },
-            body: JSON.stringify({
-                grant_type: AUTH_CODE_GRANT_TYPE,
-                code,
-                code_verifier: codeVerifier,
-                client_id: config.clientId,
-                redirect_uri: AUTH_DEFAULT_REDIRECT_URL,
-            }),
-        },
-    );
+        );
 
-    return {
-        bearerToken: {
-            tokenType: BEARER_TOKEN_TYPE,
-            expiresIn: response.expires_in,
-            accessToken: response.access_token,
-            refreshToken: response.refresh_token,
-            domain: normalizedDomain,
-        },
-        clientId: config.clientId,
-        scopes: config.scopes,
-    };
+        return {
+            bearerToken: {
+                tokenType: BEARER_TOKEN_TYPE,
+                expiresIn: response.expires_in,
+                accessToken: response.access_token,
+                refreshToken: response.refresh_token,
+                domain: normalizedDomain,
+            },
+            clientId: config.clientId,
+            scopes: config.scopes,
+        };
+    } catch (error) {
+        logMessage('error', {
+            code: 'ERR_ACCESS_TOKEN',
+            message: 'Error retrieving token!',
+        });
+        throw new Error(error);
+    }
 }
 
 export async function refreshToken(
@@ -158,34 +186,43 @@ export async function refreshToken(
     clientId: string,
     scopes: string[],
 ): Promise<Token> {
-    const normalizedDomain = normalizeDomain(domain);
-    const response = await httpCall<{ access_token: string; expires_in: number; refresh_token: string }>(
-        `https://${normalizedDomain}/api/oauth/refresh`,
-        {
-            method: 'POST',
-            headers: {
-                'content-type': 'application/json',
-            },
-            body: JSON.stringify({
-                grant_type: REFRESH_TOKEN_GRANT_TYPE,
-                refresh_token: refreshToken,
-                client_id: clientId,
-                scope: scopes.join('+'),
-            }),
-        },
-    );
 
-    return {
-        bearerToken: {
-            tokenType: BEARER_TOKEN_TYPE,
-            expiresIn: response.expires_in,
-            accessToken: response.access_token,
-            refreshToken: response.refresh_token,
-            domain: normalizedDomain,
-        },
-        clientId,
-        scopes,
-    };
+    try {
+        const normalizedDomain = normalizeDomain(domain);
+        const response = await httpCall<{ access_token: string; expires_in: number; refresh_token: string }>(
+            `https://${normalizedDomain}/api/oauth/refresh`,
+            {
+                method: 'POST',
+                headers: {
+                    'content-type': 'application/json',
+                },
+                body: JSON.stringify({
+                    grant_type: REFRESH_TOKEN_GRANT_TYPE,
+                    refresh_token: refreshToken,
+                    client_id: clientId,
+                    scope: scopes.join('+'),
+                }),
+            },
+        );
+
+        return {
+            bearerToken: {
+                tokenType: BEARER_TOKEN_TYPE,
+                expiresIn: response.expires_in,
+                accessToken: response.access_token,
+                refreshToken: response.refresh_token,
+                domain: normalizedDomain,
+            },
+            clientId,
+            scopes,
+        };
+    } catch (error) {
+        logMessage('error', {
+            code: 'ERR_REFRESH_TOKEN',
+            message: 'Error refreshing token!',
+        });
+        throw new Error(error);
+    }
 }
 
 export async function revokeToken(
@@ -203,7 +240,7 @@ export async function revokeToken(
     } catch (error) {
         logMessage('error', {
             code: 'ERR_TOKEN_REVOKE',
-            message: 'Access token could not be revoked!',
+            message: 'Error revoking token!',
         });
     }
 }
