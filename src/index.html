@@ -62,11 +62,8 @@
         diam.
     </p>
 </div>
-<div id="AuthenticatorFrame"></div>
 <script type="module">
     import {authorize, revoke, refresh} from "../dist/index.mjs";
-    let domain = '';
-    let token = null;
     const POPUP_CONFIG = {
         width: 800,
         height: 600,
@@ -74,20 +71,19 @@
         left: 50,
         title: "Authorize Frontify"
     };
-
     const AUTHORIZATION_CONFIG = {
-        // domain: 'weare.frontify.com',
+        domain: 'weare.frontify.com',
         clientId: 'client-65yw8hnekdg4mssd',
-        redirectUri: '/connection/frontify-authenticator',
         scopes: ["basic:read", "finder:read", "account:read"],
     };
+
+    let domain = '';
+    let token = null;
   
     function authorizeAction() {
         // handle domain window
         if (!token) {
-            authorize(AUTHORIZATION_CONFIG, POPUP_CONFIG).then(res => {
-                console.log('initial auth');
-                console.log(res);
+            FrontifyAuthenticator.authorize(AUTHORIZATION_CONFIG, POPUP_CONFIG).then(res => {
                 if (res) {
                     domain = res.domain;
                     token = res;
@@ -96,7 +92,6 @@
                 console.log(err);
             });
         } else {
-            console.log('stored auth');
             console.log(token);
         }
     }
@@ -104,13 +99,10 @@
 
     function revokeAction() {
         if (!token) {
-            console.log('Nothing to revoke!');
             return;
         }
 
-        revoke(token).then(res => {
-            console.log('revoked token');
-            console.log(res);
+        FrontifyAuthenticator.revoke(token).then(res => {
             token = null;
             delete(AUTHORIZATION_CONFIG.domain);
         });
@@ -118,20 +110,17 @@
 
     function refreshAction() {
         if (!token) {
-            console.log('Nothing to refresh!');
             return;
         }
 
-        refresh(token).then(res => {
-            console.log('refreshed token');
-            console.log(res);
+        FrontifyAuthenticator.refresh(token).then(res => {
             token = res;
         });
     }
 
     document.getElementById('authorize').addEventListener('click', authorizeAction);
     document.getElementById('revoke').addEventListener('click', revokeAction);
-    document.getElementById('refresh').addEventListener('click', refreshAction)
+    document.getElementById('refresh').addEventListener('click', refreshAction);
 </script>
 
 </body>
