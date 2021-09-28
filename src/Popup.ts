@@ -4,27 +4,27 @@ import { addWindowEventListener } from './Utils';
 const POPUP_DEFAULT_TITLE = 'Authorize Frontify';
 
 export type PopupConfiguration = {
+    title?: string;
     width?: number;
     height?: number;
     top?: number;
     left?: number;
-    title?: string;
 };
 
 type Configuration = {
+    title: string;
     width: number;
     height: number;
     top: number;
     left: number;
-    title: string;
 };
 
 const DEFAULT_POPUP_CONFIG = {
+    title: POPUP_DEFAULT_TITLE,
     width: 800,
     height: 600,
     top: 50,
     left: 50,
-    title: POPUP_DEFAULT_TITLE,
 };
 
 export class Popup {

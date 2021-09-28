@@ -33,11 +33,11 @@ export async function authorize(
 
     popup = createPopUp(
         popupConfiguration ?? {
+            title: POPUP_DEFAULT_TITLE,
             width: 800,
             height: 600,
             top: 50,
             left: 50,
-            title: POPUP_DEFAULT_TITLE,
         },
     );
 

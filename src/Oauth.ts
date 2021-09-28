@@ -22,16 +22,14 @@ export type AuthorizationUrl = {
     sessionId: string;
 };
 
-export type BearerToken = {
-    tokenType: string;
-    expiresIn: number;
-    accessToken: string;
-    refreshToken: string;
-    domain: string;
-};
-
 export type Token = {
-    bearerToken: BearerToken;
+    bearerToken: {
+        tokenType: string;
+        expiresIn: number;
+        accessToken: string;
+        refreshToken: string;
+        domain: string;
+    };
     clientId: string;
     scopes: string[];
 };
@@ -70,11 +68,12 @@ export async function computeAuthorizationUrl(config: AuthenticationConfig): Pro
             sessionId,
         };
     } catch (error) {
+        const errorMessage: string = 'Error computing authorization url.';
         logMessage('error', {
             code: 'ERR_COMPUTE_AUTH_URL',
-            message: 'Error computing authorization url.',
+            message: errorMessage,
         });
-        throw new Error(error);
+        throw new Error(errorMessage);
     }
 }
 
@@ -93,11 +92,12 @@ export async function initializeOauthSession(domain: string): Promise<string> {
 
         return session.data.key;
     } catch (error) {
+        const errorMessage: string = 'Error generating session.';
         logMessage('error', {
             code: 'ERR_SESSION',
-            message: 'Error generating session.',
+            message: errorMessage,
         });
-        throw new Error(error);
+        throw new Error(errorMessage);
     }
 }
 
@@ -123,11 +123,12 @@ export async function pollOauthSession(config: AuthenticationConfig, sessionId: 
 
         return response.data.payload.code;
     } catch (error) {
+        const errorMessage: string = 'Error polling session.';
         logMessage('error', {
             code: 'ERR_POLL_SESSION',
             message: 'Error polling session.',
         });
-        throw new Error(error);
+        throw new Error(errorMessage);
     }
 }
 
@@ -172,11 +173,12 @@ export async function retrieveAccessToken(
             scopes: config.scopes,
         };
     } catch (error) {
+        const errorMessage: string = 'Error retrieving token.';
         logMessage('error', {
             code: 'ERR_ACCESS_TOKEN',
-            message: 'Error retrieving token!',
+            message: 'errorMessage',
         });
-        throw new Error(error);
+        throw new Error(errorMessage);
     }
 }
 
@@ -217,11 +219,12 @@ export async function refreshToken(
             scopes,
         };
     } catch (error) {
+        const errorMessage: string = 'Error refreshing token.';
         logMessage('error', {
             code: 'ERR_REFRESH_TOKEN',
-            message: 'Error refreshing token!',
+            message: errorMessage,
         });
-        throw new Error(error);
+        throw new Error(errorMessage);
     }
 }
 
@@ -238,9 +241,11 @@ export async function revokeToken(
             body: JSON.stringify({ token: accessToken }),
         });
     } catch (error) {
+        const errorMessage: string = 'Error revoking token.';
         logMessage('error', {
             code: 'ERR_TOKEN_REVOKE',
-            message: 'Error revoking token!',
+            message: errorMessage,
         });
+        throw new Error(errorMessage);
     }
 }
