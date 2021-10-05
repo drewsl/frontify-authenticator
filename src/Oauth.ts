@@ -128,7 +128,7 @@ export async function pollOauthSession(config: AuthenticationConfig, sessionId: 
     }
 }
 
-export async function retrieveAccessToken(
+export async function getAccessToken(
     config: AuthenticationConfig,
     code: string,
     codeVerifier: string,
