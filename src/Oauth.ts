@@ -1,14 +1,14 @@
 import { encodeUrlToBase64, getRandomString, toUrlParameter, httpCall, normalizeDomain } from './Utils';
 import { logMessage } from './Logger';
 
-const CODE_VERIFIER_LENGTH: number = 64;
-const AUTH_URL_RESPONSE_TYPE: string = 'code';
-const AUTH_URL_CODE_CHALLENGE_METHOD: string = 'S256';
-const AUTH_DEFAULT_REDIRECT_URL: string = '/connection/authenticator';
-const AUTH_CODE_GRANT_TYPE: string = 'authorization_code';
-const REFRESH_TOKEN_GRANT_TYPE: string = 'refresh_token';
-const HASH_ALGORITHM: string = 'SHA-256';
-const BEARER_TOKEN_TYPE: string = 'Bearer';
+const CODE_VERIFIER_LENGTH = 64;
+const AUTH_URL_RESPONSE_TYPE = 'code';
+const AUTH_URL_CODE_CHALLENGE_METHOD = 'S256';
+const AUTH_DEFAULT_REDIRECT_URL = '/connection/authenticator';
+const AUTH_CODE_GRANT_TYPE = 'authorization_code';
+const REFRESH_TOKEN_GRANT_TYPE = 'refresh_token';
+const HASH_ALGORITHM = 'SHA-256';
+const BEARER_TOKEN_TYPE = 'Bearer';
 
 export type AuthenticationConfig = {
     domain?: string;
@@ -42,7 +42,6 @@ async function computeChallengeCode(codeVerifier: string): Promise<string> {
 }
 
 export async function computeAuthorizationUrl(config: AuthenticationConfig): Promise<AuthorizationUrl> {
-
     if (!config.domain) {
         throw new Error('No domain provided!');
     }
@@ -53,22 +52,20 @@ export async function computeAuthorizationUrl(config: AuthenticationConfig): Pro
         const sessionId: string = await initializeOauthSession(config.domain);
 
         return {
-            authorizationUrl: `https://${normalizeDomain(config.domain)}/api/oauth/authorize?${toUrlParameter(
-                {
-                    response_type: AUTH_URL_RESPONSE_TYPE,
-                    client_id: config.clientId,
-                    scope: config.scopes.join('+'),
-                    code_challenge: codeChallenge,
-                    code_challenge_method: AUTH_URL_CODE_CHALLENGE_METHOD,
-                    redirect_uri: AUTH_DEFAULT_REDIRECT_URL,
-                    session_id: sessionId,
-                },
-            )}`,
+            authorizationUrl: `https://${normalizeDomain(config.domain)}/api/oauth/authorize?${toUrlParameter({
+                response_type: AUTH_URL_RESPONSE_TYPE,
+                client_id: config.clientId,
+                scope: config.scopes.join('+'),
+                code_challenge: codeChallenge,
+                code_challenge_method: AUTH_URL_CODE_CHALLENGE_METHOD,
+                redirect_uri: AUTH_DEFAULT_REDIRECT_URL,
+                session_id: sessionId,
+            })}`,
             codeVerifier,
             sessionId,
         };
     } catch (error) {
-        const errorMessage: string = 'Error computing authorization url.';
+        const errorMessage = 'Error computing authorization url.';
         logMessage('error', {
             code: 'ERR_COMPUTE_AUTH_URL',
             message: errorMessage,
@@ -92,7 +89,7 @@ export async function initializeOauthSession(domain: string): Promise<string> {
 
         return session.data.key;
     } catch (error) {
-        const errorMessage: string = 'Error generating session.';
+        const errorMessage = 'Error generating session.';
         logMessage('error', {
             code: 'ERR_SESSION',
             message: errorMessage,
@@ -102,7 +99,6 @@ export async function initializeOauthSession(domain: string): Promise<string> {
 }
 
 export async function pollOauthSession(config: AuthenticationConfig, sessionId: string): Promise<string> {
-
     if (!config.domain) {
         throw new Error('No domain provided!');
     }
@@ -123,7 +119,7 @@ export async function pollOauthSession(config: AuthenticationConfig, sessionId: 
 
         return response.data.payload.code;
     } catch (error) {
-        const errorMessage: string = 'Error polling session.';
+        const errorMessage = 'Error polling session.';
         logMessage('error', {
             code: 'ERR_POLL_SESSION',
             message: 'Error polling session.',
@@ -137,7 +133,6 @@ export async function retrieveAccessToken(
     code: string,
     codeVerifier: string,
 ): Promise<Token> {
-
     if (!config.domain) {
         throw new Error('No domain provided!');
     }
@@ -173,7 +168,7 @@ export async function retrieveAccessToken(
             scopes: config.scopes,
         };
     } catch (error) {
-        const errorMessage: string = 'Error retrieving token.';
+        const errorMessage = 'Error retrieving token.';
         logMessage('error', {
             code: 'ERR_ACCESS_TOKEN',
             message: 'errorMessage',
@@ -182,13 +177,12 @@ export async function retrieveAccessToken(
     }
 }
 
-export async function refreshToken(
+export async function getRefreshToken(
     domain: string,
     refreshToken: string,
     clientId: string,
     scopes: string[],
 ): Promise<Token> {
-
     try {
         const normalizedDomain = normalizeDomain(domain);
         const response = await httpCall<{ access_token: string; expires_in: number; refresh_token: string }>(
@@ -219,7 +213,7 @@ export async function refreshToken(
             scopes,
         };
     } catch (error) {
-        const errorMessage: string = 'Error refreshing token.';
+        const errorMessage = 'Error refreshing token.';
         logMessage('error', {
             code: 'ERR_REFRESH_TOKEN',
             message: errorMessage,
@@ -228,10 +222,7 @@ export async function refreshToken(
     }
 }
 
-export async function revokeToken(
-    domain: string,
-    accessToken: string,
-): Promise<void> {
+export async function revokeToken(domain: string, accessToken: string): Promise<void> {
     try {
         await httpCall(`https://${normalizeDomain(domain)}/api/oauth/revoke`, {
             method: 'POST',
@@ -241,7 +232,7 @@ export async function revokeToken(
             body: JSON.stringify({ token: accessToken }),
         });
     } catch (error) {
-        const errorMessage: string = 'Error revoking token.';
+        const errorMessage = 'Error revoking token.';
         logMessage('error', {
             code: 'ERR_TOKEN_REVOKE',
             message: errorMessage,

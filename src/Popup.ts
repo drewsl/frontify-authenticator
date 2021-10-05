@@ -31,14 +31,14 @@ export class Popup {
     public readonly popUp: Window | null;
     private readonly interval: NodeJS.Timer;
     private readonly unregisterEventListener: () => void;
-    private static EVENT_NAME_CANCELLED: string = 'frontify-oauth-authorize-cancelled';
-    private static EVENT_NAME_SUCCESS: string = 'frontify-oauth-authorize-success';
-    private static EVENT_METHOD_CANCELLED: string = 'cancelled';
-    private static EVENT_METHOD_SUCCESS: string = 'success';
-    private static EVENT_METHOD_DOMAIN: string = 'domain';
-    private static EVENT_METHOD_ABORTED: string = 'aborted';
+    private static EVENT_NAME_CANCELLED = 'frontify-oauth-authorize-cancelled';
+    private static EVENT_NAME_SUCCESS = 'frontify-oauth-authorize-success';
+    private static EVENT_METHOD_CANCELLED = 'cancelled';
+    private static EVENT_METHOD_SUCCESS = 'success';
+    private static EVENT_METHOD_DOMAIN = 'domain';
+    private static EVENT_METHOD_ABORTED = 'aborted';
     public listeners: { [name: string]: () => void } = {};
-    private domain: string = "";
+    private domain = '';
 
     public constructor(userConfiguration: PopupConfiguration) {
         const configuration = { ...DEFAULT_POPUP_CONFIG, ...userConfiguration };
