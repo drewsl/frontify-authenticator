@@ -1,6 +1,6 @@
 {
     "name": "@frontify/frontify-authenticator",
-    "version": "2.0.0-beta-0",
+    "version": "2.0.0-beta.0",
     "description": "Authenticate to your Frontify instance from within any secure web app.",
     "files": [
         "dist/**/*"
