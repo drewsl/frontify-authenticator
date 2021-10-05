@@ -20,7 +20,8 @@
         "build:ts": "rollup -c",
         "clean": "rimraf dist",
         "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
-        "lint": "tslint -p tsconfig.json",
+        "lint": "eslint 'src/**/*.ts'",
+        "lint:fix": "eslint 'src/**/*.ts' --fix",
         "prepublishOnly": "npm run build"
     },
     "repository": {
@@ -40,9 +41,11 @@
     },
     "homepage": "https://developer.frontify.com/",
     "devDependencies": {
+        "@frontify/eslint-config-typescript": "^0.11.0",
         "@types/node": "^16.7.13",
         "cross-env": "^7.0.3",
         "esbuild": "^0.12.17",
+        "eslint": "^7.32.0",
         "esm": "^3.2.25",
         "node-fetch": "^3.0.0",
         "prettier": "^2.3.2",
@@ -51,8 +54,6 @@
         "rollup": "^2.55.1",
         "rollup-plugin-dts": "^3.0.2",
         "rollup-plugin-esbuild": "^4.5.0",
-        "tslint": "^6.1.3",
-        "tslint-config-prettier": "^1.18.0",
         "typescript": "^4.3.5"
     }
 }

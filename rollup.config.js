@@ -13,7 +13,9 @@ export default [
     bundle({
         plugins: [
             // commonjs(),
-            esbuild(),
+            esbuild({
+                minify: process.env.NODE_ENV === 'production',
+            }),
         ],
         output: [
             {
@@ -25,6 +27,12 @@ export default [
             {
                 file: `${name}.es.js`,
                 format: 'es',
+                sourcemap: true,
+            },
+            {
+                file: `${name}.js`,
+                format: 'iife',
+                name: 'FrontifyAuthenticator',
                 sourcemap: true,
             },
         ],
