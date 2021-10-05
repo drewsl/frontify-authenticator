@@ -128,11 +128,7 @@ export async function pollOauthSession(config: AuthenticationConfig, sessionId: 
     }
 }
 
-export async function getAccessToken(
-    config: AuthenticationConfig,
-    code: string,
-    codeVerifier: string,
-): Promise<Token> {
+export async function getAccessToken(config: AuthenticationConfig, code: string, codeVerifier: string): Promise<Token> {
     if (!config.domain) {
         throw new Error('No domain provided!');
     }
