@@ -16,6 +16,7 @@
     "module": "dist/index.es.js",
     "scripts": {
         "build": "npm run clean && cross-env NODE_ENV=production npm run build:ts",
+        "typecheck": "tsc",
         "build:ts": "rollup -c",
         "clean": "rimraf dist",
         "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
