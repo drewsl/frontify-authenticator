@@ -40,7 +40,7 @@ export async function httpCall<JsonResponse>(url: string, init?: RequestInit): P
         });
 }
 
-export function addWindowEventListener(eventType: string, callback: () => void): () => void {
+export function addWindowEventListener(eventType: string, callback: any): () => void {
     window.addEventListener(eventType, callback);
     return () => {
         window.removeEventListener(eventType, callback);

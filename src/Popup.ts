@@ -54,7 +54,7 @@ export class Popup {
     }
 
     private attachEventListeners: () => void = () => {
-        return (event: MessageEvent) => {
+        return (event: MessageEvent): void => {
             switch (event.data) {
                 case Popup.EVENT_NAME_CANCELLED:
                     this.call(Popup.EVENT_METHOD_CANCELLED);
@@ -69,7 +69,7 @@ export class Popup {
                     } else if (event.data.aborted) {
                         this.call(Popup.EVENT_METHOD_ABORTED);
                     }
-                    return;
+                    break;
             }
         };
     };
