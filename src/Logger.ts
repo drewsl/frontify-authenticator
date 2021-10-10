@@ -3,7 +3,7 @@ export type LogInfo = {
     message: string;
 };
 
-export function logMessage(type: string, info: LogInfo) {
+export function logMessage(type: string, info: LogInfo): void {
     switch (type) {
         case 'warning':
             console.warn(info.message);

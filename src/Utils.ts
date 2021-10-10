@@ -32,15 +32,15 @@ export async function httpCall<JsonResponse>(url: string, init?: RequestInit): P
             }
             throw new Error(response.statusText);
         })
-        .then((response) => {
+        .then((response: JsonResponse) => {
             return response;
         })
-        .catch((error) => {
+        .catch((error: string) => {
             throw new Error(error);
         });
 }
 
-export function addWindowEventListener(eventType: string, callback: any): () => void {
+export function addWindowEventListener(eventType: string, callback: () => void): () => void {
     window.addEventListener(eventType, callback);
     return () => {
         window.removeEventListener(eventType, callback);
