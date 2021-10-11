@@ -63,18 +63,18 @@
     </p>
 </div>
 <script src="https://unpkg.com/@frontify/frontify-authenticator@latest/dist/index.js"></script>
-<script">
+<script>
     const POPUP_CONFIG = {
         width: 800,
         height: 600,
         top: 50,
         left: 50,
-        title: "Authorize Frontify"
+        title: 'Authorize Frontify',
     };
     const AUTHORIZATION_CONFIG = {
         // domain: 'weare.frontify.com',
         clientId: 'client-65yw8hnekdg4mssd',
-        scopes: ["basic:read", "finder:read", "account:read"],
+        scopes: ['basic:read', 'finder:read', 'account:read'],
     };
 
     let token = localStorage.getItem('FrontifyAuthenticatorToken');
