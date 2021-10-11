@@ -10,7 +10,7 @@ import {
     revokeToken,
 } from './Oauth';
 
-const DOMAIN_WINDOW_DEFAULT_URL = 'https://dev.frontify.test/finder';
+const DOMAIN_WINDOW_DEFAULT_URL = 'https://app.frontify.com/finder';
 const POPUP_DEFAULT_TITLE = 'Authorize Frontify';
 const POPUP_STATE = {
     open: false,
