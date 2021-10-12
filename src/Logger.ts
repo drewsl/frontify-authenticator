@@ -6,9 +6,9 @@ export type LogInfo = {
 export function logMessage(type: string, info: LogInfo): void {
     switch (type) {
         case 'warning':
-            console.warn(info.message);
+            console.warn(`${info.code}: ${info.message}`);
             break;
         case 'error':
-            throw new Error(info.message);
+            console.log(`%c ${info.code}:%c ${info.message}`, 'background: red; color: white', 'color: red');
     }
 }
