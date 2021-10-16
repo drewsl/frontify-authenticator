@@ -1,4 +1,4 @@
-import { logMessage } from './Logger';
+import { AuthenticatorError } from './Exception';
 import { addWindowEventListener } from './Utils';
 
 const POPUP_DEFAULT_TITLE = 'Authorize Frontify';
@@ -53,7 +53,7 @@ export class Popup {
         }, 100);
     }
 
-    private attachEventListeners: () => void = () => {
+    private attachEventListeners: CallableFunction = () => {
         return (event: MessageEvent): void => {
             switch (event.data) {
                 case Popup.EVENT_NAME_CANCELLED:
@@ -88,10 +88,7 @@ export class Popup {
         );
 
         if (!popUp) {
-            logMessage('error', {
-                code: 'ERR_POPUP_BLOCKED',
-                message: 'Popup is blocked! Make sure to enable popups!',
-            });
+            throw new AuthenticatorError('ERR_POPUP_BLOCKED', 'Popup is blocked! Make sure to enable popups!');
         }
 
         return popUp;
@@ -111,23 +108,23 @@ export class Popup {
         return this.domain;
     }
 
-    public onDomain(callback: any) {
+    public onDomain(callback: () => void): void {
         this.listeners.domain = callback;
     }
 
-    public onAborted(callback: any) {
+    public onAborted(callback: () => void): void {
         this.listeners.aborted = callback;
     }
 
-    public onSuccess(callback: any) {
+    public onSuccess(callback: () => void): void {
         this.listeners.success = callback;
     }
 
-    public onCancelled(callback: any) {
+    public onCancelled(callback: () => void): void {
         this.listeners.canceled = callback;
     }
 
-    close() {
+    close(): void {
         this.listeners = {};
         clearInterval(this.interval);
         this.unregisterEventListener();
@@ -136,14 +133,12 @@ export class Popup {
         }
     }
 
-    navigateToUrl(url: string) {
+    navigateToUrl(url: string): void {
         if (this.popUp && !this.popUp.closed) {
             this.popUp.location.replace(url);
-        } else {
-            logMessage('error', {
-                code: 'ERR_POPUP_CLOSED',
-                message: 'Popup is closed!',
-            });
+            return;
         }
+
+        throw new AuthenticatorError('ERR_POPUP_CLOSED', 'Popup is closed!');
     }
 }

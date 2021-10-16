@@ -1,3 +1,5 @@
+import { AuthenticatorError } from './Exception';
+
 export function getRandomString(length: number): string {
     const validChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let array = new Uint8Array(length);
@@ -30,19 +32,19 @@ export async function httpCall<JsonResponse>(url: string, init?: RequestInit): P
             if (response.status >= 200 && response.status <= 299) {
                 return (await response.json()) as JsonResponse;
             }
-            throw new Error(response.statusText);
+            throw new AuthenticatorError('ERR_HTTP_REQUEST', response.statusText);
         })
-        .then((response: JsonResponse) => {
+        .then((response: JsonResponse): JsonResponse => {
             return response;
         })
         .catch((error: string) => {
-            throw new Error(error);
+            throw new AuthenticatorError('ERR_HTTP_REQUEST', error);
         });
 }
 
-export function addWindowEventListener(eventType: string, callback: any): () => void {
-    window.addEventListener(eventType, callback);
+export function addWindowEventListener(eventType: string, listener: EventListenerOrEventListenerObject): () => void {
+    window.addEventListener(eventType, listener);
     return () => {
-        window.removeEventListener(eventType, callback);
+        window.removeEventListener(eventType, listener);
     };
 }

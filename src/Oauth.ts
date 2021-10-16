@@ -1,5 +1,5 @@
 import { encodeUrlToBase64, getRandomString, toUrlParameter, httpCall, normalizeDomain } from './Utils';
-import { logMessage } from './Logger';
+import { AuthenticatorError } from './Exception';
 
 const CODE_VERIFIER_LENGTH = 64;
 const AUTH_URL_RESPONSE_TYPE = 'code';
@@ -10,8 +10,8 @@ const REFRESH_TOKEN_GRANT_TYPE = 'refresh_token';
 const HASH_ALGORITHM = 'SHA-256';
 const BEARER_TOKEN_TYPE = 'Bearer';
 
-export type AuthenticationConfig = {
-    domain?: string;
+export type AuthConfiguration = {
+    domain: string;
     clientId: string;
     scopes: string[];
 };
@@ -41,15 +41,11 @@ async function computeChallengeCode(codeVerifier: string): Promise<string> {
     return encodeUrlToBase64(hash);
 }
 
-export async function computeAuthorizationUrl(config: AuthenticationConfig): Promise<AuthorizationUrl> {
-    if (!config.domain) {
-        throw new Error('No domain provided!');
-    }
-
+export async function computeAuthorizationUrl(config: AuthConfiguration): Promise<AuthorizationUrl> {
     try {
         const codeVerifier: string = getRandomString(CODE_VERIFIER_LENGTH);
         const codeChallenge: string = await computeChallengeCode(codeVerifier);
-        const sessionId: string = await initializeOauthSession(config.domain);
+        const sessionId: string | void = (await initializeOauthSession(config.domain)) || '';
 
         return {
             authorizationUrl: `https://${normalizeDomain(config.domain)}/api/oauth/authorize?${toUrlParameter({
@@ -64,45 +60,25 @@ export async function computeAuthorizationUrl(config: AuthenticationConfig): Pro
             codeVerifier,
             sessionId,
         };
-    } catch (error) {
-        const errorMessage = 'Error computing authorization url.';
-        logMessage('error', {
-            code: 'ERR_COMPUTE_AUTH_URL',
-            message: errorMessage,
-        });
-        throw new Error(errorMessage);
+    } catch {
+        throw new AuthenticatorError('ERR_COMPUTE_AUTH_URL', 'Error computing authorization url!');
     }
 }
 
-export async function initializeOauthSession(domain: string): Promise<string> {
+export async function initializeOauthSession(domain: string): Promise<string | void> {
     try {
         const session = await httpCall<{ data: { key: string } }>(
             `https://${normalizeDomain(domain)}/api/oauth/create/session`,
             { method: 'POST' },
-        ).catch((error) => {
-            logMessage('error', {
-                code: 'ERR_SESSION',
-                message: 'Error generating session.',
-            });
-            throw new Error(error);
-        });
+        );
 
-        return session.data.key;
-    } catch (error) {
-        const errorMessage = 'Error generating session.';
-        logMessage('error', {
-            code: 'ERR_SESSION',
-            message: errorMessage,
-        });
-        throw new Error(errorMessage);
+        return session?.data.key;
+    } catch {
+        throw new AuthenticatorError('ERR_SESSION', 'Error generating session.');
     }
 }
 
-export async function pollOauthSession(config: AuthenticationConfig, sessionId: string): Promise<string> {
-    if (!config.domain) {
-        throw new Error('No domain provided!');
-    }
-
+export async function pollOauthSession(config: AuthConfiguration, sessionId: string): Promise<string> {
     try {
         const response = await httpCall<{ data: { payload: { code: string } } }>(
             `https://${normalizeDomain(config.domain)}/api/oauth/poll`,
@@ -115,26 +91,19 @@ export async function pollOauthSession(config: AuthenticationConfig, sessionId: 
                     session_id: sessionId,
                 }),
             },
-        );
+        ).catch(() => {
+            throw new AuthenticatorError('ERR_OAUTH_POLL_REQUEST', 'Error requesting oauth session poll.');
+        });
 
         return response.data.payload.code;
-    } catch (error) {
-        const errorMessage = 'Error polling session.';
-        logMessage('error', {
-            code: 'ERR_POLL_SESSION',
-            message: 'Error polling session.',
-        });
-        throw new Error(errorMessage);
+    } catch {
+        throw new AuthenticatorError('ERR_OAUTH_POLL', 'Error polling oauth session.');
     }
 }
 
-export async function getAccessToken(config: AuthenticationConfig, code: string, codeVerifier: string): Promise<Token> {
-    if (!config.domain) {
-        throw new Error('No domain provided!');
-    }
-
+export async function getAccessToken(config: AuthConfiguration, code: string, codeVerifier: string): Promise<Token> {
     try {
-        const normalizedDomain = normalizeDomain(config.domain);
+        const normalizedDomain = normalizeDomain(config?.domain);
         const response = await httpCall<{ access_token: string; expires_in: number; refresh_token: string }>(
             `https://${normalizedDomain}/api/oauth/accesstoken`,
             {
@@ -163,13 +132,8 @@ export async function getAccessToken(config: AuthenticationConfig, code: string,
             clientId: config.clientId,
             scopes: config.scopes,
         };
-    } catch (error) {
-        const errorMessage = 'Error retrieving token.';
-        logMessage('error', {
-            code: 'ERR_ACCESS_TOKEN',
-            message: 'errorMessage',
-        });
-        throw new Error(errorMessage);
+    } catch {
+        throw new AuthenticatorError('ERR_ACCESS_TOKEN', 'Error retrieving token.');
     }
 }
 
@@ -208,13 +172,8 @@ export async function getRefreshToken(
             clientId,
             scopes,
         };
-    } catch (error) {
-        const errorMessage = 'Error refreshing token.';
-        logMessage('error', {
-            code: 'ERR_REFRESH_TOKEN',
-            message: errorMessage,
-        });
-        throw new Error(errorMessage);
+    } catch {
+        throw new AuthenticatorError('ERR_REFRESH_TOKEN', 'Error refreshing token.');
     }
 }
 
@@ -227,12 +186,7 @@ export async function revokeToken(domain: string, accessToken: string): Promise<
             },
             body: JSON.stringify({ token: accessToken }),
         });
-    } catch (error) {
-        const errorMessage = 'Error revoking token.';
-        logMessage('error', {
-            code: 'ERR_TOKEN_REVOKE',
-            message: errorMessage,
-        });
-        throw new Error(errorMessage);
+    } catch {
+        throw new AuthenticatorError('ERR_TOKEN_REVOKE', 'Error revoking token.');
     }
 }
