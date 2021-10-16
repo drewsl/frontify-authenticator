@@ -1,7 +1,8 @@
+import { AuthenticatorError } from './Exception';
 import { logMessage } from './Logger';
 import { Popup, PopupConfiguration } from './Popup';
 import {
-    AuthenticationConfig,
+    AuthConfiguration,
     Token,
     computeAuthorizationUrl,
     pollOauthSession,
@@ -10,6 +11,12 @@ import {
     revokeToken,
 } from './Oauth';
 
+export type AuthConfigurationInput = {
+    domain?: string;
+    clientId: string;
+    scopes: string[];
+};
+
 const DOMAIN_WINDOW_DEFAULT_URL = 'https://app.frontify.com/finder';
 const POPUP_DEFAULT_TITLE = 'Authorize Frontify';
 const POPUP_STATE = {
@@ -17,17 +24,17 @@ const POPUP_STATE = {
 };
 
 let popup: Popup;
+let token: Token;
+let domainPopUpTimeout: NodeJS.Timeout;
+let authTimeout: NodeJS.Timeout;
 
 export async function authorize(
-    configuration: AuthenticationConfig,
+    configuration: AuthConfigurationInput,
     popupConfiguration?: PopupConfiguration,
-): Promise<Token | void> {
+): Promise<Token> {
     if (POPUP_STATE.open) {
-        logMessage('warning', {
-            code: 'ERR_POPUP_OPEN',
-            message: 'Popup already open!',
-        });
-        throw new Error('Popup already open!');
+        POPUP_STATE.open = false;
+        popup.close();
     }
 
     popup = createPopUp(
@@ -43,63 +50,66 @@ export async function authorize(
     POPUP_STATE.open = true;
 
     if (!configuration.domain) {
-        return openDomainPopUp(configuration, popup)
-            .then((res) => {
+        await openDomainPopUp(configuration, popup)
+            .then((result: Token): Token | void => {
                 POPUP_STATE.open = false;
-                if (res) {
-                    return res;
+                if (result) {
+                    token = result;
                 }
             })
             .catch(() => {
                 delete configuration.domain;
-                logMessage('error', {
-                    code: 'ERR_AUTH_SKIPPED',
-                    message: 'Domain not inserted!',
-                });
-                throw new Error('Domain not inserted!');
-            });
-    } else {
-        return authenticate(configuration, popup)
-            .then((res) => {
-                POPUP_STATE.open = false;
-                if (res) {
-                    return res;
-                }
-            })
-            .catch((error) => {
-                POPUP_STATE.open = false;
-                throw new Error(error);
             });
     }
-}
 
-export async function refresh(token: Token): Promise<Token> {
-    return getRefreshToken(token.bearerToken.domain, token.bearerToken.refreshToken, token.clientId, token.scopes);
-}
+    await authenticate(configuration as AuthConfiguration, popup).then((result: Token): Token | void => {
+        POPUP_STATE.open = false;
+        if (result) {
+            token = result;
+        }
+    });
 
-export async function revoke(token: Token): Promise<Token> {
-    await revokeToken(token.bearerToken.domain, token.bearerToken.accessToken);
+    if (!token) {
+        throw new AuthenticatorError('ERR_AUTH', 'No token returned.');
+    }
+
     return token;
 }
 
-async function authenticate(configuration: AuthenticationConfig, popUp: Popup): Promise<Token> {
+export async function refresh(tokenInput: Token): Promise<Token> {
+    return getRefreshToken(
+        tokenInput.bearerToken.domain,
+        tokenInput.bearerToken.refreshToken,
+        tokenInput.clientId,
+        tokenInput.scopes,
+    );
+}
+
+export async function revoke(tokenInput: Token): Promise<Token> {
+    await revokeToken(tokenInput.bearerToken.domain, tokenInput.bearerToken.accessToken);
+    return tokenInput;
+}
+
+async function authenticate(configuration: AuthConfiguration, popUp: Popup): Promise<Token> {
     try {
-        const { authorizationUrl, codeVerifier, sessionId } = await computeAuthorizationUrl(configuration);
-        await openAuthPopUp(authorizationUrl, popUp);
-        const authorizationCode = await pollOauthSession(configuration, sessionId);
-        return getAccessToken(configuration, authorizationCode, codeVerifier);
+        const computedAuthorization = await computeAuthorizationUrl(configuration);
+        await openAuthPopUp(computedAuthorization.authorizationUrl, popUp);
+        const authorizationCode = await pollOauthSession(configuration, computedAuthorization.sessionId);
+        return getAccessToken(configuration, authorizationCode, computedAuthorization.codeVerifier);
     } catch (error) {
         const errorMessage = `Error generating session. Make sure that the inserted domain is a valid and secure Frontify instance.`;
         popUp.popUp?.postMessage({ domainError: errorMessage }, '*');
-        logMessage('error', {
-            code: 'ERR_AUTH_FAILED',
-            message: errorMessage,
-        });
-        throw new Error(errorMessage);
+
+        if (error instanceof AuthenticatorError && error.code === 'ERR_COMPUTE_AUTH_URL') {
+            throw new AuthenticatorError('ERR_AUTH_SESSION', 'Failed generating session.');
+        }
+
+        POPUP_STATE.open = false;
+        throw new AuthenticatorError('ERR_AUTH', 'Failed getting access token.');
     }
 }
 
-function openDomainPopUp(configuration: AuthenticationConfig, popUp: Popup): Promise<Token> {
+function openDomainPopUp(configuration: AuthConfigurationInput, popUp: Popup): Promise<Token> {
     popUp.navigateToUrl(DOMAIN_WINDOW_DEFAULT_URL);
 
     logMessage('warning', {
@@ -107,27 +117,30 @@ function openDomainPopUp(configuration: AuthenticationConfig, popUp: Popup): Pro
         message: 'Popup window opened!',
     });
 
-    return new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => {
+    return new Promise((resolve) => {
+        domainPopUpTimeout = setTimeout(() => {
             POPUP_STATE.open = false;
             popUp.close();
-            reject();
-            logMessage('error', {
-                code: 'ERR_DOMAIN_TIMEOUT',
-                message: 'Popup window timeout!',
+            logMessage('warning', {
+                code: 'WARN_DOMAIN_TIMEOUT',
+                message: 'Popup window timed out!',
             });
         }, 5 * 60 * 1000);
 
         popUp.onDomain(() => {
-            clearTimeout(timeout);
+            clearTimeout(domainPopUpTimeout);
             configuration.domain = popup.getDomain();
-            authenticate(configuration, popup)
+            const authorizationConfiguration = configuration as AuthConfiguration;
+            authenticate(authorizationConfiguration, popup)
                 .then((result) => {
-                    resolve(result);
+                    if (result) {
+                        resolve(result);
+                    }
                 })
-                .catch((error) => {
-                    throw new Error(error ?? 'Could not verify instance!');
+                .catch(() => {
+                    delete configuration.domain;
                 });
+
             logMessage('warning', {
                 code: 'WARN_DOMAIN_SELECT',
                 message: 'Domain input submitted!',
@@ -136,13 +149,12 @@ function openDomainPopUp(configuration: AuthenticationConfig, popUp: Popup): Pro
 
         popUp.onAborted(() => {
             POPUP_STATE.open = false;
-            clearTimeout(timeout);
-            popUp.close();
-            reject();
+            clearTimeout(domainPopUpTimeout);
             logMessage('warning', {
                 code: 'WARN_DOMAIN_CLOSED',
                 message: 'Popup window closed!',
             });
+            popUp.close();
         });
     });
 }
@@ -155,22 +167,20 @@ function openAuthPopUp(url: string, popUp: Popup): Promise<void> {
         message: 'Popup window opened!',
     });
 
-    return new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => {
+    return new Promise((resolve) => {
+        authTimeout = setTimeout(() => {
             POPUP_STATE.open = false;
             popUp.close();
-            reject();
-            logMessage('error', {
-                code: 'ERR_DOMAIN_TIMEOUT',
-                message: 'Popup window timeout!',
+            logMessage('warning', {
+                code: 'WARN_AUTH_TIMEOUT',
+                message: 'Popup window timed out!',
             });
         }, 5 * 60 * 1000);
 
         popUp.onAborted(() => {
             POPUP_STATE.open = false;
-            clearTimeout(timeout);
+            clearTimeout(authTimeout);
             popUp.close();
-            reject();
             logMessage('warning', {
                 code: 'WARN_DOMAIN_CLOSED',
                 message: 'Popup window closed!',
@@ -179,7 +189,7 @@ function openAuthPopUp(url: string, popUp: Popup): Promise<void> {
 
         popUp.onSuccess(() => {
             POPUP_STATE.open = false;
-            clearTimeout(timeout);
+            clearTimeout(authTimeout);
             popUp.close();
             resolve();
             logMessage('warning', {
@@ -190,9 +200,8 @@ function openAuthPopUp(url: string, popUp: Popup): Promise<void> {
 
         popUp.onCancelled(() => {
             POPUP_STATE.open = false;
-            clearTimeout(timeout);
+            clearTimeout(authTimeout);
             popUp.close();
-            reject();
             logMessage('warning', {
                 code: 'WARN_AUTH_CANCELLED',
                 message: 'Auth cancelled!',
