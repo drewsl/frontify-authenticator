@@ -9,6 +9,9 @@ export function logMessage(type: string, info: LogInfo): void {
             console.warn(`${info.code}: ${info.message}`);
             break;
         case 'error':
-            console.log(`%c ${info.code}:%c ${info.message}`, 'background: red; color: white', 'color: red');
+            console.log(`%c${info.code}:%c ${info.message}`, 'background: red; color: white', 'color: red');
+            break;
+        default:
+            break;
     }
 }
