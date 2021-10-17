@@ -61,7 +61,7 @@ export async function computeAuthorizationUrl(config: AuthConfiguration): Promis
             sessionId,
         };
     } catch {
-        throw new AuthenticatorError('ERR_COMPUTE_AUTH_URL', 'Error computing authorization url!');
+        throw new AuthenticatorError('ERR_AUTH_COMPUTE_URL', 'Error computing authorization url.');
     }
 }
 
@@ -92,12 +92,12 @@ export async function pollOauthSession(config: AuthConfiguration, sessionId: str
                 }),
             },
         ).catch(() => {
-            throw new AuthenticatorError('ERR_OAUTH_POLL_REQUEST', 'Error requesting oauth session poll.');
+            throw new AuthenticatorError('ERR_AUTH_POLL_REQUEST', 'Error requesting oauth session poll.');
         });
 
         return response.data.payload.code;
     } catch {
-        throw new AuthenticatorError('ERR_OAUTH_POLL', 'Error polling oauth session.');
+        throw new AuthenticatorError('ERR_AUTH_POLL', 'Error polling oauth session.');
     }
 }
 
@@ -133,7 +133,7 @@ export async function getAccessToken(config: AuthConfiguration, code: string, co
             scopes: config.scopes,
         };
     } catch {
-        throw new AuthenticatorError('ERR_ACCESS_TOKEN', 'Error retrieving token.');
+        throw new AuthenticatorError('ERR_AUTH_ACCESS_TOKEN', 'Error retrieving token.');
     }
 }
 
@@ -173,7 +173,7 @@ export async function getRefreshToken(
             scopes,
         };
     } catch {
-        throw new AuthenticatorError('ERR_REFRESH_TOKEN', 'Error refreshing token.');
+        throw new AuthenticatorError('ERR_AUTH_REFRESH_TOKEN', 'Error refreshing token.');
     }
 }
 
@@ -187,6 +187,6 @@ export async function revokeToken(domain: string, accessToken: string): Promise<
             body: JSON.stringify({ token: accessToken }),
         });
     } catch {
-        throw new AuthenticatorError('ERR_TOKEN_REVOKE', 'Error revoking token.');
+        throw new AuthenticatorError('ERR_AUTH_TOKEN_REVOKE', 'Error revoking token.');
     }
 }
