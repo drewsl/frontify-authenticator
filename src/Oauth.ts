@@ -65,7 +65,7 @@ export async function computeAuthorizationUrl(config: AuthConfiguration): Promis
     }
 }
 
-export async function initializeOauthSession(domain: string): Promise<string | void> {
+export async function initializeOauthSession(domain: string): Promise<string> {
     try {
         const session = await httpCall<{ data: { key: string } }>(
             `https://${normalizeDomain(domain)}/api/oauth/create/session`,
