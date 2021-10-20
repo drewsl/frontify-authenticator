@@ -3,13 +3,25 @@ export type LogInfo = {
     message: string;
 };
 
+const disabledLogs: {
+    warnings: boolean;
+    errors: boolean;
+} = {
+    warnings: true,
+    errors: false,
+};
+
 export function logMessage(type: string, info: LogInfo): void {
     switch (type) {
         case 'warning':
-            console.warn(`${info.code}: ${info.message}`);
+            if (!disabledLogs.warnings) {
+                console.warn(`${info.code}: ${info.message}`);
+            }
             break;
         case 'error':
-            console.log(`%c${info.code}:%c ${info.message}`, 'background: red; color: white', 'color: red');
+            if (!disabledLogs.errors) {
+                console.log(`%c${info.code}:%c ${info.message}`, 'background: red; color: white', 'color: red');
+            }
             break;
         default:
             break;
