@@ -11,6 +11,9 @@ import {
     revokeToken,
 } from './Oauth';
 
+export type { PopupConfiguration };
+export type { Token };
+
 export type AuthConfigurationInput = {
     domain?: string;
     clientId: string;
