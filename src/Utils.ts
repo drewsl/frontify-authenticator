@@ -37,7 +37,11 @@ export async function httpCall<JsonResponse>(url: string, init?: RequestInit): P
         .then((response: JsonResponse): JsonResponse => {
             return response;
         })
-        .catch((error: string) => {
+        .catch((error: AuthenticatorError | string) => {
+            if (error instanceof AuthenticatorError) {
+                throw error;
+            }
+
             throw new AuthenticatorError('ERR_HTTP_REQUEST', error);
         });
 }
