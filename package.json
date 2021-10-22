@@ -42,6 +42,7 @@
     "homepage": "https://developer.frontify.com/",
     "devDependencies": {
         "@frontify/eslint-config-typescript": "^0.11.0",
+        "@rollup/plugin-node-resolve": "^13.0.6",
         "@types/node": "^16.7.13",
         "cross-env": "^7.0.3",
         "esbuild": "^0.12.17",

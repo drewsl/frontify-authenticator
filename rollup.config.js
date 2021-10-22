@@ -1,18 +1,19 @@
 import dts from 'rollup-plugin-dts';
 import esbuild from 'rollup-plugin-esbuild';
+import nodeResolve from '@rollup/plugin-node-resolve';
+import pckg from './package.json';
 
-const name = require('./package.json').main.replace('.umd.js', '');
+const name = pckg.main.replace('.umd.js', '');
 
 const bundle = (config) => ({
     ...config,
     input: 'src/index.ts',
-    external: (id) => !/^[./]/.test(id),
 });
 
 export default [
     bundle({
         plugins: [
-            // commonjs(),
+            nodeResolve(),
             esbuild({
                 minify: process.env.NODE_ENV === 'production',
             }),
