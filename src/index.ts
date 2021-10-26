@@ -52,17 +52,33 @@ export async function authorize(
     POPUP_STATE.open = true;
 
     if (!configuration.domain) {
-        await openDomainPopUp(configuration, popup).then((result: Token): Token | void => {
-            POPUP_STATE.open = false;
-            token = result;
-        });
-    } else {
-        await authenticate(configuration as AuthConfiguration, popup).then((result: Token): Token | void => {
-            POPUP_STATE.open = false;
-            if (result) {
+        await openDomainPopUp(configuration, popup)
+            .then((result: Token): Token | void => {
+                POPUP_STATE.open = false;
                 token = result;
-            }
-        });
+            })
+            .catch((error) => {
+                if (error === false) {
+                    throw new AuthenticatorError('ERR_DOMAIN_POPUP_CLOSED', 'Domain cancelled by client.');
+                }
+
+                throw new AuthenticatorError('ERR_AUTH_FAILED', 'Auth failed.');
+            });
+    } else {
+        await authenticate(configuration as AuthConfiguration, popup)
+            .then((result: Token): Token | void => {
+                POPUP_STATE.open = false;
+                if (result) {
+                    token = result;
+                }
+            })
+            .catch((error) => {
+                if (error === false) {
+                    throw new AuthenticatorError('ERR_AUTH_POPUP_CLOSED', 'Auth aborted by client.');
+                }
+
+                throw new AuthenticatorError('ERR_AUTH_FAILED', 'Auth failed.');
+            });
     }
 
     if (!token) {
@@ -151,10 +167,7 @@ function openDomainPopUp(configuration: AuthConfigurationInput, popUp: Popup): P
             POPUP_STATE.open = false;
             clearTimeout(domainPopUpTimeout);
             popUp.close();
-            logMessage('warning', {
-                code: 'WARN_DOMAIN_POPUP_CLOSED',
-                message: 'Domain popup closed.',
-            });
+            reject(false);
         });
     });
 }
@@ -167,7 +180,7 @@ function openAuthPopUp(url: string, popUp: Popup): Promise<void> {
         message: 'Auth popup opened.',
     });
 
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
         authTimeout = setTimeout(() => {
             POPUP_STATE.open = false;
             popUp.close();
@@ -181,10 +194,7 @@ function openAuthPopUp(url: string, popUp: Popup): Promise<void> {
             POPUP_STATE.open = false;
             clearTimeout(authTimeout);
             popUp.close();
-            logMessage('warning', {
-                code: 'WARN_AUTH_POPUP_CLOSED',
-                message: 'Auth popup closed.',
-            });
+            reject(false);
         });
 
         popUp.onSuccess(() => {
@@ -202,10 +212,7 @@ function openAuthPopUp(url: string, popUp: Popup): Promise<void> {
             POPUP_STATE.open = false;
             clearTimeout(authTimeout);
             popUp.close();
-            logMessage('warning', {
-                code: 'WARN_AUTH_CANCELLED',
-                message: 'Auth cancelled.',
-            });
+            reject(false);
         });
     });
 }
