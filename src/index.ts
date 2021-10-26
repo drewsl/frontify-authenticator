@@ -11,8 +11,7 @@ import {
     revokeToken,
 } from './Oauth';
 
-export type { PopupConfiguration };
-export type { Token };
+export type { Token, PopupConfiguration };
 
 export type AuthConfigurationInput = {
     domain?: string;
@@ -118,7 +117,7 @@ async function authenticate(configuration: AuthConfiguration, popUp: Popup): Pro
         }
 
         POPUP_STATE.open = false;
-        throw new AuthenticatorError('ERR_AUTH', 'Failed getting access token.');
+        throw new AuthenticatorError('ERR_AUTH', 'Failed retrieving access token.');
     }
 }
 
