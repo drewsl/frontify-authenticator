@@ -1,6 +1,7 @@
 export type LogInfo = {
     code: string;
     message: string;
+    error?: any;
 };
 
 const disabledLogs: {
@@ -20,7 +21,7 @@ export function logMessage(type: string, info: LogInfo): void {
             break;
         case 'error':
             if (!disabledLogs.errors) {
-                console.log(`%c${info.code}:%c ${info.message}`, 'background: red; color: white', 'color: red');
+                console.error(`%c${info.code}:%c ${info.message}`, info.error || '');
             }
             break;
         default:
