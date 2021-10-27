@@ -32,7 +32,7 @@ export async function httpCall<JsonResponse>(url: string, init?: RequestInit): P
             if (response.status >= 200 && response.status <= 299) {
                 return (await response.json()) as JsonResponse;
             }
-            throw new AuthenticatorError('ERR_HTTP_REQUEST', response.statusText);
+            throw new AuthenticatorError('ERR_AUTH_HTTP_REQUEST', response.statusText);
         })
         .then((response: JsonResponse): JsonResponse => {
             return response;
@@ -42,7 +42,7 @@ export async function httpCall<JsonResponse>(url: string, init?: RequestInit): P
                 throw error;
             }
 
-            throw new AuthenticatorError('ERR_HTTP_REQUEST', error);
+            throw new AuthenticatorError('ERR_AUTH_HTTP_REQUEST', error);
         });
 }
 

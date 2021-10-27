@@ -58,7 +58,7 @@ export async function authorize(
             })
             .catch((error) => {
                 if (error === false) {
-                    throw new AuthenticatorError('ERR_DOMAIN_POPUP_CLOSED', 'Domain cancelled by client.');
+                    throw new AuthenticatorError('ERR_AUTH_DOMAIN_POPUP_CLOSED', 'Domain cancelled by client.');
                 }
 
                 throw new AuthenticatorError('ERR_AUTH_FAILED', 'Auth failed.');

@@ -21,7 +21,7 @@ export function logMessage(type: string, info: LogInfo): void {
             break;
         case 'error':
             if (!disabledLogs.errors) {
-                console.error(`%c${info.code}:%c ${info.message}`, info.error || '');
+                console.error(`${info.code}: ${info.message}`, info.error || '');
             }
             break;
         default:

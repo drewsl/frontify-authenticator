@@ -74,7 +74,7 @@ export async function initializeOauthSession(domain: string): Promise<string> {
 
         return session?.data.key;
     } catch {
-        throw new AuthenticatorError('ERR_SESSION', 'Error generating session.');
+        throw new AuthenticatorError('ERR_AUTH_SESSION', 'Error generating session.');
     }
 }
 

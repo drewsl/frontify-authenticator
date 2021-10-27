@@ -88,7 +88,7 @@ export class Popup {
         );
 
         if (!popUp) {
-            throw new AuthenticatorError('ERR_POPUP_BLOCKED', 'Popup is blocked. Make sure to enable popups.');
+            throw new AuthenticatorError('ERR_AUTH_POPUP_BLOCKED', 'Popup is blocked. Make sure to enable popups.');
         }
 
         return popUp;
@@ -139,6 +139,6 @@ export class Popup {
             return;
         }
 
-        throw new AuthenticatorError('ERR_POPUP_CLOSED', 'Popup is closed.');
+        throw new AuthenticatorError('ERR_AUTH_POPUP_CLOSED', 'Popup is closed.');
     }
 }
